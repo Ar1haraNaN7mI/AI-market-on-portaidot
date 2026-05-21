@@ -1,0 +1,6 @@
+contracts/portalproof_escrow/target/
+node_modules/
+.portalproof/
+portalproof-server.pid
+portalproof-server-*.pid
+npm-debug.log*

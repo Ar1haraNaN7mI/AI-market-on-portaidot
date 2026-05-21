@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PortalProof Market</title>
+    <meta
+      name="description"
+      content="Trusted digital delivery marketplace for agents, cybersecurity services, and verifiable work on Portaldot."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">P</span>
+        <div>
+          <div class="brand-title">PortalProof Market</div>
+          <div class="brand-subtitle">Trusted delivery on Portaldot</div>
+        </div>
+      </div>
+
+      <nav class="topnav" aria-label="Primary">
+        <a href="#home">Home</a>
+        <a href="#marketplace">Marketplace</a>
+        <a href="#delivery">Trusted Delivery</a>
+        <a href="#security">Cybersecurity</a>
+        <a href="#agents">Agents & Skills</a>
+        <a href="#explorer">Explorer</a>
+        <a href="#seller">Seller Studio</a>
+        <a href="#buyer">Buyer Dashboard</a>
+        <a href="#docs">Docs</a>
+      </nav>
+
+      <button id="walletButton" class="button button-secondary" type="button">
+        Connect Wallet
+      </button>
+    </header>
+
+    <main>
+      <section id="home" class="section hero">
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Portaldot trusted delivery market</p>
+            <h1>Trusted digital delivery on Portaldot</h1>
+            <p class="lede">
+              Buy agents, cybersecurity services, and enterprise deliverables
+              with POT escrow, delivery hashes, and on-chain verification.
+            </p>
+
+            <div class="hero-actions">
+              <a class="button button-primary" href="#marketplace">Explore Market</a>
+              <a class="button button-secondary" href="#explorer">Verify Delivery</a>
+              <a
+                id="openExplorerButton"
+                class="button button-secondary"
+                href="https://www.portaldot.io/#/explorer"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open Explorer
+              </a>
+            </div>
+
+            <label class="search-bar" for="globalSearch">
+              <span>Search</span>
+              <input
+                id="globalSearch"
+                type="search"
+                placeholder="Search agents, audits, skills, reports, delivery proofs"
+              />
+            </label>
+
+            <div class="chip-row" aria-label="Portaldot themes">
+              <span class="chip">Layer0</span>
+              <span class="chip">POT gas</span>
+              <span class="chip">Cross-chain</span>
+              <span class="chip">ZKP</span>
+              <span class="chip">DAO</span>
+              <span class="chip">RWA</span>
+              <span class="chip">AI security</span>
+            </div>
+          </div>
+
+          <aside class="panel hero-panel">
+            <div class="panel-head">
+              <h2>Network snapshot</h2>
+              <span class="status status-live">Live</span>
+            </div>
+
+            <div id="statsGrid" class="stats-grid" aria-live="polite"></div>
+
+            <div class="mini-chart" aria-label="Market activity preview">
+              <div class="mini-chart-bar bar-a"></div>
+              <div class="mini-chart-bar bar-b"></div>
+              <div class="mini-chart-bar bar-c"></div>
+              <div class="mini-chart-bar bar-d"></div>
+              <div class="mini-chart-bar bar-e"></div>
+              <div class="mini-chart-bar bar-f"></div>
+            </div>
+
+            <div class="detail-list">
+              <div>
+                <span class="detail-label">Current network</span>
+                <strong id="networkName">Portaldot</strong>
+              </div>
+              <div>
+                <span class="detail-label">Settlement token</span>
+                <strong>POT</strong>
+              </div>
+              <div>
+                <span class="detail-label">Delivery model</span>
+                <strong>Escrow + proof + release</strong>
+              </div>
+              <div>
+                <span class="detail-label">Chain adapter</span>
+                <strong id="chainMode">Mock mode</strong>
+              </div>
+            </div>
+
+            <div class="readiness-block" aria-label="Hackathon readiness">
+              <div class="readiness-head">
+                <span class="detail-label">Hackathon ready</span>
+                <strong>Submission checklist</strong>
+              </div>
+              <ul class="readiness-list">
+                <li>Portaldot native deployment target</li>
+                <li>POT as gas and settlement token</li>
+                <li>Open-source escrow contract</li>
+                <li>Runnable MVP with demo script and README</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Portaldot alignment</p>
+                <h2>Why this project fits the hackathon</h2>
+              </div>
+            </div>
+
+            <div class="alignment-grid">
+              <div>
+                <strong>Trust layer</strong>
+                <p>Escrow, proof, acceptance, and release are all modeled on-chain so the delivery trail is verifiable.</p>
+              </div>
+              <div>
+                <strong>POT-native settlement</strong>
+                <p>Orders are priced in POT and the live contract adapter is wired for POT-funded escrow.</p>
+              </div>
+              <div>
+                <strong>Security-first scope</strong>
+                <p>The marketplace explicitly allows defensive work, audits, and remediation while blocking offensive use.</p>
+              </div>
+              <div>
+                <strong>Builder-ready demo</strong>
+                <p>The UI, README, and demo script are set up so judges can replay the MVP flow quickly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="marketplace" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Marketplace</p>
+              <h2>Discover services</h2>
+            </div>
+            <p class="section-note">
+              Browse agents, cybersecurity services, and delivery packages.
+            </p>
+          </div>
+
+          <div class="panel filter-panel">
+              <div class="filter-grid">
+                <label>
+                  <span>Category</span>
+                  <select id="categoryFilter"></select>
+                </label>
+              <label>
+                <span>Delivery type</span>
+                <select id="deliveryFilter"></select>
+              </label>
+              <label>
+                <span>Payment type</span>
+                <select id="paymentFilter"></select>
+              </label>
+              <label>
+                <span>Verification</span>
+                <select id="verificationFilter"></select>
+              </label>
+              <label>
+                <span>Seller status</span>
+                <select id="sellerFilter"></select>
+              </label>
+            </div>
+          </div>
+
+          <div id="serviceGrid" class="card-grid" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section id="delivery" class="section">
+        <div class="container two-column">
+          <div>
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Trusted Delivery</p>
+                <h2>Escrow, proof, accept, release</h2>
+              </div>
+            </div>
+
+            <div class="panel">
+              <ol class="flow-list">
+                <li>Buyer creates the order and funds POT escrow.</li>
+                <li>Seller accepts the order and prepares the delivery.</li>
+                <li>Seller submits a hash, metadata, or signed artifact.</li>
+                <li>Buyer verifies the proof and accepts delivery.</li>
+                <li>Contract releases POT to the seller.</li>
+              </ol>
+            </div>
+
+            <div class="panel order-panel">
+              <div class="panel-head">
+                <h3>Sample order</h3>
+                <span id="sampleStatus" class="status"></span>
+              </div>
+
+              <div class="order-meta">
+                <div>
+                  <span class="detail-label">Order ID</span>
+                  <strong id="sampleOrderId">ORD-001</strong>
+                </div>
+                <div>
+                  <span class="detail-label">Service</span>
+                  <strong id="sampleServiceTitle"></strong>
+                </div>
+                <div>
+                  <span class="detail-label">Escrow</span>
+                  <strong id="sampleAmount"></strong>
+                </div>
+                <div>
+                  <span class="detail-label">Proof hash</span>
+                  <strong id="sampleProof"></strong>
+                </div>
+              </div>
+
+              <div class="progress-track" aria-hidden="true">
+                <span id="progressFill" class="progress-fill"></span>
+              </div>
+
+              <div class="action-row">
+                <button id="acceptOrderBtn" class="button button-secondary" type="button">
+                  Accept Order
+                </button>
+                <button id="submitProofBtn" class="button button-secondary" type="button">
+                  Submit Proof
+                </button>
+                <button id="acceptDeliveryBtn" class="button button-secondary" type="button">
+                  Accept Delivery
+                </button>
+                <button id="releaseBtn" class="button button-primary" type="button">
+                  Release POT
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="panel order-form-panel">
+            <div class="panel-head">
+              <h3>Create order</h3>
+              <span class="status status-outline">Local draft</span>
+            </div>
+
+            <form id="orderForm" class="stack-form">
+              <label>
+                <span>Service</span>
+                <select id="orderServiceSelect" name="serviceId"></select>
+              </label>
+              <div class="form-grid compact-form-grid">
+                <label>
+                  <span>Buyer wallet address</span>
+                  <input name="buyerAddress" type="text" placeholder="0x..." />
+                </label>
+                <label>
+                  <span>Seller wallet address</span>
+                  <input name="sellerAddress" type="text" placeholder="0x..." />
+                </label>
+              </div>
+              <label>
+                <span>Escrow amount in POT</span>
+                <input id="orderAmount" name="amount" type="number" min="1" step="1" value="50" />
+              </label>
+              <label>
+                <span>Delivery requirements</span>
+                <textarea
+                  name="deliveryRequirements"
+                  rows="3"
+                  placeholder="Hashes, report links, repository references, signed metadata, or contract addresses"
+                ></textarea>
+              </label>
+              <label>
+                <span>Required proof</span>
+                <select name="proofType">
+                  <option>Hash Proof</option>
+                  <option>Signed Report</option>
+                  <option>Git Commit</option>
+                  <option>Contract Address</option>
+                </select>
+              </label>
+              <label>
+                <span>Expected delivery date</span>
+                <input name="dueDate" type="date" />
+              </label>
+              <label class="checkbox-row">
+                <input name="acceptTerms" type="checkbox" checked />
+                <span>I confirm the delivery terms and acceptance flow</span>
+              </label>
+              <label class="checkbox-row">
+                <input name="fundNow" type="checkbox" checked />
+                <span>Fund escrow immediately</span>
+              </label>
+              <button class="button button-primary" type="submit">Create order</button>
+            </form>
+          </aside>
+        </div>
+      </section>
+
+      <section id="security" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Cybersecurity</p>
+              <h2>Allowed services and hard boundaries</h2>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div class="panel">
+              <h3>Allowed</h3>
+              <ul class="tag-list">
+                <li>Authorized penetration testing</li>
+                <li>Smart contract audit</li>
+                <li>Vulnerability reporting</li>
+                <li>Security baseline checks</li>
+                <li>SBOM generation</li>
+                <li>Supply chain scanning</li>
+                <li>Patch recommendations</li>
+                <li>Defensive monitoring rules</li>
+                <li>Compliance reports</li>
+                <li>Security hardening guides</li>
+              </ul>
+            </div>
+
+            <div class="panel">
+              <h3>Prohibited</h3>
+              <ul class="tag-list danger">
+                <li>Credential theft</li>
+                <li>Malware creation or distribution</li>
+                <li>Exploit kits for unauthorized use</li>
+                <li>Phishing kits</li>
+                <li>Botnets</li>
+                <li>Bypass tools for unauthorized access</li>
+                <li>Data exfiltration tooling</li>
+                <li>Unauthorized intrusion instructions</li>
+                <li>Stolen data or account sales</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="agents" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Agents & Skills</p>
+              <h2>Featured reusable work</h2>
+            </div>
+            <p class="section-note">Reusable automation, agents, and service bundles.</p>
+          </div>
+
+          <div id="agentGrid" class="card-grid compact-grid"></div>
+        </div>
+      </section>
+
+      <section id="explorer" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Delivery Explorer</p>
+              <h2>Verify orders and transactions</h2>
+            </div>
+          </div>
+
+          <div class="panel explorer-toolbar">
+            <label class="search-bar" for="explorerSearch">
+              <span>Search</span>
+              <input
+                id="explorerSearch"
+                type="search"
+                placeholder="Search order ID, address, tx hash, service ID, artifact hash"
+              />
+            </label>
+            <button id="syncChainButton" class="button button-secondary" type="button">
+              Refresh chain
+            </button>
+            <button id="openEventsApiButton" class="button button-secondary" type="button" title="Open saved explorer rows as JSON">
+              Open Events API
+            </button>
+            <button id="resetDemoButton" class="button button-secondary" type="button">
+              Reset demo
+            </button>
+            <div class="explorer-summary" id="explorerSummary"></div>
+          </div>
+
+          <div class="panel table-panel">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Order</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Tx Hash</th>
+                </tr>
+              </thead>
+              <tbody id="explorerBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="seller" class="section">
+        <div class="container two-column">
+          <div>
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Seller Studio</p>
+                <h2>List and manage services</h2>
+              </div>
+            </div>
+
+            <div class="panel">
+              <form id="serviceForm" class="stack-form">
+                <div class="form-grid">
+                  <label>
+                    <span>Title</span>
+                    <input name="title" type="text" placeholder="Security review agent" />
+                  </label>
+                  <label>
+                    <span>Category</span>
+                    <select name="category">
+                      <option>Agent</option>
+                      <option>Skill</option>
+                      <option>MCP Server</option>
+                      <option>Cybersecurity</option>
+                      <option>Smart Contract Audit</option>
+                      <option>DevOps</option>
+                      <option>Enterprise Delivery</option>
+                      <option>RWA</option>
+                      <option>DAO Tool</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Price in POT</span>
+                    <input name="price" type="number" min="1" step="1" value="25" />
+                  </label>
+                  <label>
+                    <span>Delivery days</span>
+                    <input name="deliveryDays" type="number" min="1" step="1" value="3" />
+                  </label>
+                  <label>
+                    <span>Delivery type</span>
+                    <select name="deliveryType">
+                      <option>File</option>
+                      <option>Report</option>
+                      <option>API</option>
+                      <option>Private Deployment</option>
+                      <option>Code Repository</option>
+                      <option>On-chain Contract</option>
+                      <option>Security Rule Pack</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Verification method</span>
+                    <select name="verification">
+                      <option>Hash Proof</option>
+                      <option>Contract Address</option>
+                      <option>Git Commit</option>
+                      <option>Signed Report</option>
+                      <option>Metadata JSON</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label>
+                  <span>Description</span>
+                  <textarea
+                    name="description"
+                    rows="3"
+                    placeholder="Short explanation of the service"
+                  ></textarea>
+                </label>
+
+                <label>
+                  <span>What buyer receives</span>
+                  <textarea
+                    name="deliverables"
+                    rows="3"
+                    placeholder="Deliverables, access items, hashes, links, or report contents"
+                  ></textarea>
+                </label>
+
+                <label>
+                  <span>Allowed use</span>
+                  <textarea
+                    name="allowedUse"
+                    rows="2"
+                    placeholder="Authorized security testing only"
+                  ></textarea>
+                </label>
+
+                <button class="button button-primary" type="submit">Publish draft service</button>
+              </form>
+            </div>
+          </div>
+
+          <aside class="panel">
+            <div class="panel-head">
+              <h3>Incoming orders</h3>
+              <span class="status status-outline">Tracked locally</span>
+            </div>
+            <div id="incomingOrders" class="stack-list"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="buyer" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Buyer Dashboard</p>
+              <h2>Manage orders and escrow</h2>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div class="panel">
+              <h3>My orders</h3>
+              <div id="buyerOrders" class="stack-list"></div>
+            </div>
+
+            <div class="panel">
+              <h3>Escrowed POT</h3>
+              <div class="balance-card">
+                <strong id="escrowBalance">0 POT</strong>
+                <span>Funds waiting for acceptance</span>
+              </div>
+              <h3>Pending deliveries</h3>
+              <div id="pendingDeliveries" class="stack-list"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="docs" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Docs</p>
+              <h2>Usage guide</h2>
+            </div>
+          </div>
+
+          <div class="card-grid docs-grid">
+            <article class="panel">
+              <h3>Buy a service</h3>
+              <p>Select a listing, create an order, fund POT escrow, and verify the proof on delivery.</p>
+            </article>
+            <article class="panel">
+              <h3>Sell a service</h3>
+              <p>Publish a service, accept orders, submit hashes or signed metadata, and collect payment after acceptance.</p>
+            </article>
+            <article class="panel">
+              <h3>Verify delivery</h3>
+              <p>Use the explorer to search by order ID, hash, address, or service ID.</p>
+            </article>
+            <article class="panel">
+              <h3>Cybersecurity policy</h3>
+              <p>Only authorized defensive work, audits, hardening, and remediation are allowed.</p>
+            </article>
+            <article class="panel">
+              <h3>Portaldot fit</h3>
+              <p>Portaldot provides the trust layer, gas, escrow settlement, and verifiable on-chain record.</p>
+            </article>
+            <article class="panel">
+              <h3>Chain info</h3>
+              <p>
+                Websocket <code>wss://mainnet.portaldot.io</code>, SS58 <code>42</code>,
+                POT uses 14 decimals, and the local node path is
+                <code>portaldot_dev --dev --alice</code>.
+              </p>
+            </article>
+            <article class="panel">
+              <h3>Explorer access</h3>
+              <p>
+                Use the official Portaldot explorer for live chain browsing, then switch to
+                <code>Local Node</code> when testing against a local network.
+              </p>
+            </article>
+            <article class="panel">
+              <h3>MVP boundary</h3>
+              <p>Focus on discover, order, escrow, proof, acceptance, release, and verification.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
