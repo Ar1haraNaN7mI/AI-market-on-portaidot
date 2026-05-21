@@ -61,7 +61,7 @@ Configuration lives in `config.js`.
 
 Local UI IDs such as `SVC-001` and `ORD-001` are converted to numeric contract IDs before live contract calls.
 
-When `mockFallback` is `false`, the Explorer refresh button can read `get_service`, `get_order`, and `get_owner` from the deployed contract. Set `queryAccount` in `config.js` if you need read calls before a wallet is connected.
+When `mockFallback` is `false`, the Explorer refresh button can read `get_service`, `get_order`, and `get_owner` from the deployed contract. `config.js` includes the Portaldot genesis hash and a public `queryAccount` for read calls before a wallet is connected.
 
 Write transactions also surface decoded `contractEvents` into the Delivery Explorer feed when the live adapter is active.
 

@@ -4,3 +4,6 @@ node_modules/
 portalproof-server.pid
 portalproof-server-*.pid
 npm-debug.log*
+
+# Local encrypted wallet exports / keystores.
+5CHvEZNsgxvbVMCKXYwC4dLw9to35EEFhvYZF4FdfCNZGrvQ.json

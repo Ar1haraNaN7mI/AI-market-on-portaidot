@@ -263,6 +263,13 @@ class LivePortalproofContractClient {
     const provider = new WsProvider(this.config.rpcEndpoint);
     this.api = await ApiPromise.create({ provider });
 
+    if (this.config.genesisHash) {
+      const connectedGenesis = this.api.genesisHash.toHex();
+      if (connectedGenesis.toLowerCase() !== this.config.genesisHash.toLowerCase()) {
+        throw new Error(`Connected to unexpected network genesis ${connectedGenesis}`);
+      }
+    }
+
     const metadata = await fetch(this.config.contractMetadataUrl).then((response) => {
       if (!response.ok) {
         throw new Error(`Cannot load contract metadata: ${response.status}`);
