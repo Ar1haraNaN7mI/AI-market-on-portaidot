@@ -1,6 +1,8 @@
 contracts/portalproof_escrow/target/
 node_modules/
 .portalproof/
+__pycache__/
+*.pyc
 portalproof-server.pid
 portalproof-server-*.pid
 npm-debug.log*

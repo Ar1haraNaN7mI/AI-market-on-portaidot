@@ -7,8 +7,9 @@
     "start": "node server.js",
     "demo": "node scripts/start-demo.js",
     "check:js": "node --check app.js && node --check portalproof-contract.js && node --check server.js && node --check scripts/start-demo.js",
+    "check:python": "python -m py_compile scripts/portaldot-sdk-service.py",
     "test:smoke": "node scripts/smoke-test.js",
     "test:contract": "cargo test --manifest-path contracts/portalproof_escrow/Cargo.toml",
-    "test": "npm run check:js && npm run test:smoke && npm run test:contract"
+    "test": "npm run check:js && npm run check:python && npm run test:smoke && npm run test:contract"
   }
 }

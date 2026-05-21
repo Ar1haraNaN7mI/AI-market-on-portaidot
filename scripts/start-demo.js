@@ -1,11 +1,15 @@
 const http = require("node:http");
-const { spawn } = require("node:child_process");
+const fs = require("node:fs");
+const { spawn, spawnSync } = require("node:child_process");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const port = Number(process.env.PORT || 3000);
 const targetUrl = `http://localhost:${port}`;
 const serverEntry = path.join(root, "server.js");
+const pythonServiceEntry = path.join(root, "scripts", "portaldot-sdk-service.py");
+const pythonServicePort = Number(process.env.PORTALDOT_SDK_PORT || 8787);
+const pythonServiceUrl = `http://localhost:${pythonServicePort}/health`;
 
 function waitForServer(url, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
@@ -58,7 +62,79 @@ function openBrowser(url) {
   child.unref();
 }
 
+function readConfigString(source, key, fallback = "") {
+  const match = source.match(new RegExp(`${key}:\\s*"([^"]*)"`));
+  return match ? match[1] : fallback;
+}
+
+function readConfigNumber(source, key, fallback = 0) {
+  const match = source.match(new RegExp(`${key}:\\s*([0-9]+)`));
+  return match ? Number(match[1]) : fallback;
+}
+
+function loadPortalproofConfig() {
+  const source = fs.readFileSync(path.join(root, "config.js"), "utf8");
+  return {
+    rpcEndpoint: readConfigString(source, "rpcEndpoint", "wss://mainnet.portaldot.io"),
+    ss58Format: readConfigNumber(source, "ss58Format", 42),
+    genesisHash: readConfigString(source, "genesisHash"),
+    queryAccount: readConfigString(source, "queryAccount"),
+    contractAddress: readConfigString(source, "contractAddress"),
+    contractMetadataUrl: readConfigString(
+      source,
+      "contractMetadataUrl",
+      "./contracts/portalproof_escrow/target/ink/portalproof_escrow.json",
+    ),
+  };
+}
+
+function findPythonWithSubstrateInterface() {
+  const candidates = [
+    { file: "python", args: ["-c", "import substrateinterface"] },
+    { file: "py", args: ["-3", "-c", "import substrateinterface"] },
+  ];
+
+  for (const candidate of candidates) {
+    const result = spawnSync(candidate.file, candidate.args, {
+      cwd: root,
+      encoding: "utf8",
+      timeout: 5000,
+    });
+
+    if (result.status === 0) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function startPythonSdkService(config) {
+  const python = findPythonWithSubstrateInterface();
+  if (!python) {
+    console.warn("Portaldot Python SDK service skipped: substrateinterface is not available.");
+    return null;
+  }
+
+  const args = python.file === "py" ? ["-3", pythonServiceEntry] : [pythonServiceEntry];
+  return spawn(python.file, args, {
+    cwd: root,
+    env: {
+      ...process.env,
+      PORTALDOT_RPC_ENDPOINT: config.rpcEndpoint,
+      PORTALDOT_SS58_FORMAT: String(config.ss58Format),
+      PORTALDOT_GENESIS_HASH: config.genesisHash || "",
+      PORTALDOT_QUERY_ACCOUNT: config.queryAccount || "",
+      PORTALDOT_CONTRACT_ADDRESS: config.contractAddress || "",
+      PORTALDOT_CONTRACT_METADATA: path.resolve(root, config.contractMetadataUrl),
+      PORTALDOT_SDK_PORT: String(pythonServicePort),
+    },
+    stdio: "inherit",
+  });
+}
+
 async function main() {
+  const config = loadPortalproofConfig();
   const server = spawn(process.execPath, [serverEntry], {
     cwd: root,
     env: {
@@ -67,10 +143,14 @@ async function main() {
     },
     stdio: "inherit",
   });
+  const pythonService = startPythonSdkService(config);
 
   const shutdown = () => {
     if (!server.killed) {
       server.kill();
+    }
+    if (pythonService && !pythonService.killed) {
+      pythonService.kill();
     }
   };
 
@@ -94,7 +174,25 @@ async function main() {
     process.exit(code ?? 1);
   });
 
-  await waitForServer(targetUrl);
+  if (pythonService) {
+    pythonService.on("exit", (code, signal) => {
+      if (!signal && code !== 0) {
+        console.error(`Portaldot Python SDK service exited with code ${code}`);
+      }
+    });
+  }
+
+  const pythonServiceReady = pythonService
+    ? waitForServer(pythonServiceUrl)
+        .then(() => {
+          console.log(`Portaldot Python SDK service ready at ${pythonServiceUrl}`);
+        })
+        .catch((error) => {
+          console.warn(`Portaldot Python SDK service did not become ready: ${error.message}`);
+        })
+    : Promise.resolve();
+
+  await Promise.all([waitForServer(targetUrl), pythonServiceReady]);
   console.log(`Opening ${targetUrl}`);
   openBrowser(targetUrl);
 }

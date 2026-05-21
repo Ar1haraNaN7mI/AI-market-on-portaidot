@@ -18,6 +18,7 @@ http://localhost:3000
 
 The current demo runs in mock mode until a deployed Portaldot contract address is added to `config.js`.
 Running through `npm start` also enables local SQLite state at `.portalproof/portalproof.db`, so service drafts, order actions, and explorer rows survive refreshes during rehearsal.
+Running through `npm run demo` also starts the Portaldot Python SDK sidecar on `http://localhost:8787` when `substrateinterface` is installed.
 
 ## Narration
 

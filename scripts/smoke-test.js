@@ -13,6 +13,7 @@ const requiredMarkers = [
   "Delivery Explorer",
   "Open Explorer",
   "Chain info",
+  "Python SDK sidecar",
   "Explorer access",
   "wss://mainnet.portaldot.io",
   "Seller Studio",

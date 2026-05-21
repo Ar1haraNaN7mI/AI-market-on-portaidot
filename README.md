@@ -16,6 +16,7 @@ This repo is being shaped for the Portaldot Mini Hackathon requirements:
 - Local order flow for demoing escrow, proof, acceptance, and release
 - PRD-mapped layout that can be wired to Portaldot contracts later
 - `contracts/portalproof_escrow` ink! escrow contract scaffold matching the MVP state machine
+- Portaldot Python SDK sidecar service in `scripts/portaldot-sdk-service.py`
 
 ## Run
 
@@ -25,7 +26,7 @@ Use the local HTTP server so browser modules and future contract metadata fetche
 npm start
 ```
 
-For the integrated demo launcher that starts the server and opens the browser:
+For the integrated demo launcher that starts the web server, starts the Portaldot Python SDK sidecar when `substrateinterface` is available, and opens the browser:
 
 ```powershell
 npm run demo
@@ -38,6 +39,8 @@ http://localhost:3000
 ```
 
 The app currently runs in mock mode until `config.js` has a deployed contract address and metadata path.
+
+The Python SDK sidecar listens on `http://localhost:8787` by default. It follows the official Portaldot Python SDK example style with `SubstrateInterface`, read-only account queries, fee preview, optional signed transfer submission through `PORTALDOT_SIGNER_URI`, and optional contract reads once `contractAddress` is configured.
 
 ## Frontend Chain Adapter
 
