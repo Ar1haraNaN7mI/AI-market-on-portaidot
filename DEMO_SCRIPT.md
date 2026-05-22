@@ -10,6 +10,8 @@ Run:
 npm run demo
 ```
 
+The launcher first checks and completes the Python SDK, Rust, wasm target, and `cargo-contract` environment. Use `npm run setup` to run only the environment check.
+
 Open:
 
 ```text

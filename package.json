@@ -5,8 +5,9 @@
   "description": "Trusted digital delivery marketplace MVP for Portaldot.",
   "scripts": {
     "start": "node server.js",
+    "setup": "node scripts/ensure-env.js",
     "demo": "node scripts/start-demo.js",
-    "check:js": "node --check app.js && node --check portalproof-contract.js && node --check server.js && node --check scripts/start-demo.js",
+    "check:js": "node --check app.js && node --check portalproof-contract.js && node --check server.js && node --check scripts/start-demo.js && node --check scripts/ensure-env.js",
     "check:python": "python -m py_compile scripts/portaldot-sdk-service.py",
     "test:smoke": "node scripts/smoke-test.js",
     "test:contract": "cargo test --manifest-path contracts/portalproof_escrow/Cargo.toml",

@@ -14,6 +14,7 @@ const requiredMarkers = [
   "Open Explorer",
   "Chain info",
   "Python SDK sidecar",
+  "Environment setup",
   "Explorer access",
   "wss://mainnet.portaldot.io",
   "Seller Studio",

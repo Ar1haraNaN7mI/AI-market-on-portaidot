@@ -32,6 +32,14 @@ For the integrated demo launcher that starts the web server, starts the Portaldo
 npm run demo
 ```
 
+`npm run demo` runs the environment setup first. To run that step without launching the app:
+
+```powershell
+npm run setup
+```
+
+The setup step checks Python 3, installs `substrate-interface` when missing, adds Rust `rust-src`, adds the `wasm32-unknown-unknown` target, installs `cargo-contract` when missing, and checks for a C++ compiler required by `cargo-contract`. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
+
 Then open:
 
 ```text

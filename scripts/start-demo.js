@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const port = Number(process.env.PORT || 3000);
 const targetUrl = `http://localhost:${port}`;
 const serverEntry = path.join(root, "server.js");
+const ensureEnvEntry = path.join(root, "scripts", "ensure-env.js");
 const pythonServiceEntry = path.join(root, "scripts", "portaldot-sdk-service.py");
 const pythonServicePort = Number(process.env.PORTALDOT_SDK_PORT || 8787);
 const pythonServiceUrl = `http://localhost:${pythonServicePort}/health`;
@@ -60,6 +61,24 @@ function openBrowser(url) {
   });
 
   child.unref();
+}
+
+function ensureEnvironment() {
+  if (process.env.PORTALPROOF_SKIP_ENV_SETUP === "1") {
+    console.log("Skipping environment setup because PORTALPROOF_SKIP_ENV_SETUP=1.");
+    return;
+  }
+
+  const result = spawnSync(process.execPath, [ensureEnvEntry], {
+    cwd: root,
+    env: process.env,
+    stdio: "inherit",
+    timeout: 1800000,
+  });
+
+  if (result.status !== 0) {
+    throw new Error("Environment setup failed.");
+  }
 }
 
 function readConfigString(source, key, fallback = "") {
@@ -134,6 +153,7 @@ function startPythonSdkService(config) {
 }
 
 async function main() {
+  ensureEnvironment();
   const config = loadPortalproofConfig();
   const server = spawn(process.execPath, [serverEntry], {
     cwd: root,
