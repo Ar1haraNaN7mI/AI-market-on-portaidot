@@ -48,9 +48,36 @@ function hasExecutable(name) {
   return commandWorks(finder, [name]);
 }
 
+function addToProcessPath(directory) {
+  if (!directory || !fs.existsSync(directory)) return;
+
+  const pathKey = Object.keys(process.env).find((key) => key.toLowerCase() === "path") || "PATH";
+  const currentParts = (process.env[pathKey] || "").split(path.delimiter).filter(Boolean);
+  const alreadyPresent = currentParts.some((entry) => entry.toLowerCase() === directory.toLowerCase());
+
+  if (!alreadyPresent) {
+    process.env[pathKey] = [directory, ...currentParts].join(path.delimiter);
+  }
+}
+
+function addKnownMinGwPaths() {
+  if (!isWindows) return;
+
+  [
+    "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin",
+    "C:\\ProgramData\\chocolatey\\bin",
+    "C:\\msys64\\mingw64\\bin",
+    "C:\\mingw64\\bin",
+  ].forEach(addToProcessPath);
+}
+
 function hasCppCompiler() {
   const compilers = isWindows ? ["cl", "clang", "g++"] : ["c++", "clang++", "g++", "gcc"];
   return compilers.some(hasExecutable);
+}
+
+function hasGnuCompiler() {
+  return hasExecutable("gcc") && (hasExecutable("g++") || hasExecutable("clang++"));
 }
 
 function getRustHost() {
@@ -166,7 +193,66 @@ function tryInstallWindowsBuildTools() {
   return false;
 }
 
+function tryInstallMinGw() {
+  if (commandWorks("choco", ["--version"])) {
+    console.log("MinGW not found. Trying Chocolatey install for mingw...");
+    const result = run("choco", ["install", "mingw", "-y", "--no-progress"], { timeout: 1800000 });
+    if (result.status === 0) return true;
+  }
+
+  return false;
+}
+
+function ensureWindowsGnuToolchain() {
+  addKnownMinGwPaths();
+
+  if (!hasGnuCompiler()) {
+    tryInstallMinGw();
+    addKnownMinGwPaths();
+  }
+
+  if (!hasGnuCompiler()) {
+    throw new Error(
+      "MinGW/GCC was not found. Install MinGW-w64 or WinLibs and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.",
+    );
+  }
+
+  const toolchain = run("rustup", ["toolchain", "install", "stable-x86_64-pc-windows-gnu"], {
+    timeout: 600000,
+  });
+  if (toolchain.status !== 0) {
+    throw new Error("Failed to install Rust GNU toolchain stable-x86_64-pc-windows-gnu.");
+  }
+
+  const rustSrc = run("rustup", ["component", "add", "rust-src", "--toolchain", "stable-x86_64-pc-windows-gnu"], {
+    timeout: 240000,
+  });
+  if (rustSrc.status !== 0) {
+    throw new Error("Failed to add rust-src component for Rust GNU toolchain.");
+  }
+
+  const wasmTarget = run(
+    "rustup",
+    ["target", "add", "wasm32-unknown-unknown", "--toolchain", "stable-x86_64-pc-windows-gnu"],
+    { timeout: 240000 },
+  );
+  if (wasmTarget.status !== 0) {
+    throw new Error("Failed to add wasm32-unknown-unknown target for Rust GNU toolchain.");
+  }
+
+  return {
+    cargoPrefixArgs: ["+stable-x86_64-pc-windows-gnu"],
+    vcvarsPath: "",
+  };
+}
+
 function ensureCppBuildEnvironment() {
+  const windowsCppPreference = (process.env.PORTALPROOF_WINDOWS_CPP || "gnu").toLowerCase();
+  if (isWindows && windowsCppPreference !== "msvc") {
+    console.log("Windows C++ mode: GNU/MinGW. Set PORTALPROOF_WINDOWS_CPP=msvc to force MSVC.");
+    return ensureWindowsGnuToolchain();
+  }
+
   const rustHost = getRustHost();
   const usesMsvc = isWindows && rustHost.includes("msvc");
 
@@ -174,27 +260,27 @@ function ensureCppBuildEnvironment() {
     if (!hasCppCompiler()) {
       throw new Error("cargo-contract requires a C++17 compiler. Install gcc/clang on Linux/macOS or C++ tools on Windows.");
     }
-    return { vcvarsPath: "" };
+    return { cargoPrefixArgs: [], vcvarsPath: "" };
   }
 
   if (hasExecutable("link")) {
-    return { vcvarsPath: "" };
+    return { cargoPrefixArgs: [], vcvarsPath: "" };
   }
 
   let vcvarsPath = findVcVarsAll();
   if (vcvarsPath) {
     console.log(`Using Visual Studio C++ environment from ${vcvarsPath}`);
-    return { vcvarsPath };
+    return { cargoPrefixArgs: [], vcvarsPath };
   }
 
   if (tryInstallWindowsBuildTools()) {
     vcvarsPath = findVcVarsAll();
     if (vcvarsPath) {
       console.log(`Using Visual Studio C++ environment from ${vcvarsPath}`);
-      return { vcvarsPath };
+      return { cargoPrefixArgs: [], vcvarsPath };
     }
     if (hasExecutable("link")) {
-      return { vcvarsPath: "" };
+      return { cargoPrefixArgs: [], vcvarsPath: "" };
     }
   }
 
@@ -246,7 +332,7 @@ function ensureCargoContract() {
   const cppBuildEnvironment = ensureCppBuildEnvironment();
 
   console.log("Installing cargo-contract with cargo install --force --locked cargo-contract");
-  const installArgs = ["install", "--force", "--locked", "cargo-contract"];
+  const installArgs = [...(cppBuildEnvironment.cargoPrefixArgs || []), "install", "--force", "--locked", "cargo-contract"];
   const installed = cppBuildEnvironment.vcvarsPath
     ? runWithVcVars(cppBuildEnvironment.vcvarsPath, "cargo", installArgs, { timeout: 1800000 })
     : run("cargo", installArgs, { timeout: 1800000 });

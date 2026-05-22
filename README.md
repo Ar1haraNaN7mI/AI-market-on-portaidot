@@ -38,7 +38,11 @@ npm run demo
 npm run setup
 ```
 
-The setup step checks Python 3, installs `substrate-interface` when missing, adds Rust `rust-src`, adds the `wasm32-unknown-unknown` target, installs `cargo-contract` when missing, and checks for a C++ compiler required by `cargo-contract`. On Windows/MSVC it specifically checks `link.exe`, reuses `vcvarsall.bat` when Visual Studio Build Tools is installed but not on `PATH`, and then tries `winget`/Chocolatey installation before failing with manual Build Tools instructions. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
+The setup step checks Python 3, installs `substrate-interface` when missing, adds Rust `rust-src`, adds the `wasm32-unknown-unknown` target, installs `cargo-contract` when missing, and checks for a C++ compiler required by `cargo-contract`.
+
+On Windows, setup defaults to the lighter GNU/MinGW path so a small cloud server does not need Visual Studio Build Tools. It checks for `gcc` and `g++`, tries Chocolatey `mingw` installation when Chocolatey is available, installs `stable-x86_64-pc-windows-gnu`, and installs `cargo-contract` through that Rust GNU toolchain. If Chocolatey is not installed, install MinGW-w64 or WinLibs manually and add its `mingw64\bin` directory to `PATH`, then rerun `npm run setup`.
+
+If you intentionally want to use Visual Studio Build Tools instead, set `PORTALPROOF_WINDOWS_CPP=msvc` before running setup. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
 
 Then open:
 
@@ -106,7 +110,11 @@ rustup target add wasm32-unknown-unknown
 cargo contract build
 ```
 
-On this Windows machine, `cargo install cargo-contract --locked` currently fails inside `wasm-opt-sys` / Binaryen C++ compilation. The contract tests pass; artifact packaging should be done through WSL/Linux, CI, or a prebuilt `cargo-contract` binary.
+On Windows servers without Visual Studio Build Tools, run the build through the GNU toolchain installed by `npm run setup`:
+
+```powershell
+cargo +stable-x86_64-pc-windows-gnu contract build
+```
 
 ## Next implementation step
 
