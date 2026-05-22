@@ -212,12 +212,15 @@ def contract_read(method, args):
 class Handler(BaseHTTPRequestHandler):
     def _send(self, status, payload):
         body = json.dumps(payload, default=json_default).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionAbortedError, ConnectionResetError):
+            return
 
     def log_message(self, format, *args):
         return
@@ -235,10 +238,6 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             if parsed.path == "/health":
-                account_info = None
-                if QUERY_ACCOUNT:
-                    account_info = query_account(QUERY_ACCOUNT)
-
                 self._send(
                     200,
                     {
@@ -250,7 +249,8 @@ class Handler(BaseHTTPRequestHandler):
                         "queryAccount": QUERY_ACCOUNT or None,
                         "signerConfigured": bool(SIGNER_URI),
                         "contractConfigured": bool(contract),
-                        "accountInfo": account_info,
+                        "accountInfo": None,
+                        "accountInfoEndpoint": "/account" if QUERY_ACCOUNT else None,
                     },
                 )
                 return

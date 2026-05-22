@@ -215,6 +215,7 @@ async function main() {
   await Promise.all([waitForServer(targetUrl), pythonServiceReady]);
   console.log(`Opening ${targetUrl}`);
   openBrowser(targetUrl);
+  console.log(`Demo is running at ${targetUrl}. Press Ctrl+C to stop the web server and SDK sidecar.`);
 }
 
 main().catch((error) => {
