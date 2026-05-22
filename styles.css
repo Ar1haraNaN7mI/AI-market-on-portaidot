@@ -202,6 +202,9 @@ main {
   overflow: hidden;
   display: grid;
   align-items: center;
+  background:
+    linear-gradient(120deg, rgba(10, 24, 34, 0.72), rgba(7, 16, 24, 0.34) 42%, rgba(18, 24, 25, 0.44)),
+    linear-gradient(90deg, rgba(101, 230, 164, 0.08), transparent 24%, rgba(102, 195, 255, 0.06) 72%, transparent);
 }
 
 .hero::before,
@@ -214,17 +217,27 @@ main {
 
 .hero::before {
   background:
-    linear-gradient(115deg, rgba(101, 230, 164, 0.12) 0 1px, transparent 1px 18%),
-    linear-gradient(135deg, rgba(102, 195, 255, 0.12), transparent 34%),
-    linear-gradient(270deg, rgba(240, 184, 91, 0.08), transparent 38%);
+    linear-gradient(115deg, rgba(101, 230, 164, 0.11) 0 1px, transparent 1px 18%),
+    linear-gradient(135deg, rgba(102, 195, 255, 0.08), transparent 34%),
+    linear-gradient(270deg, rgba(240, 184, 91, 0.05), transparent 38%);
   mask-image: linear-gradient(180deg, #000, transparent 92%);
 }
 
 .hero::after {
   top: auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(102, 195, 255, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(102, 195, 255, 0.36), transparent);
   animation: scan-line 4.5s ease-in-out infinite;
+}
+
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.56;
+  mix-blend-mode: screen;
+  pointer-events: none;
 }
 
 .hero-grid,
@@ -352,15 +365,54 @@ main {
 }
 
 .hero-title-line {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
   color: rgba(245, 251, 255, 0.92);
+  background: linear-gradient(90deg, #f4f8fb 0%, #f4f8fb 42%, #8fd6ff 50%, #f4f8fb 58%, #f4f8fb 100%);
+  background-size: 230% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: title-sheen 4.8s ease-in-out infinite;
+}
+
+.hero-title-line::after,
+.kinetic-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.03em;
+  height: 0.08em;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(102, 195, 255, 0.74), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: title-loader 2.6s ease-in-out infinite;
 }
 
 .kinetic-line {
+  position: relative;
   display: block;
+  width: max-content;
+  max-width: 100%;
   height: 1.08em;
   overflow: hidden;
   color: var(--accent);
   text-shadow: 0 0 34px rgba(101, 230, 164, 0.18);
+}
+
+.kinetic-line::before {
+  content: "";
+  position: absolute;
+  right: -0.18em;
+  top: 0.13em;
+  width: 0.07em;
+  height: 0.78em;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 16px rgba(101, 230, 164, 0.45);
+  animation: caret-blink 1.15s steps(2, end) infinite;
 }
 
 .kinetic-word {
@@ -371,6 +423,48 @@ main {
 .kinetic-word span {
   display: block;
   height: 1.08em;
+  background: linear-gradient(90deg, var(--accent), #8ff0bb 52%, #c5ffe0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.title-loader-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(18px, 48px));
+  gap: 8px;
+  width: min(100%, 330px);
+  margin-top: 12px;
+}
+
+.title-loader-row span {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(102, 195, 255, 0.18);
+  overflow: hidden;
+}
+
+.title-loader-row span::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(102, 195, 255, 0.1), var(--accent), rgba(240, 184, 91, 0.62));
+  transform: translateX(-110%);
+  animation: segment-load 2.4s ease-in-out infinite;
+}
+
+.title-loader-row span:nth-child(2)::before { animation-delay: 120ms; }
+.title-loader-row span:nth-child(3)::before { animation-delay: 240ms; }
+.title-loader-row span:nth-child(4)::before { animation-delay: 360ms; }
+.title-loader-row span:nth-child(5)::before { animation-delay: 480ms; }
+.title-loader-row span:nth-child(6)::before { animation-delay: 600ms; }
+
+@supports (-webkit-background-clip: text) {
+  .hero-title-line {
+    color: transparent;
+  }
 }
 
 .hero-copy,
@@ -1246,6 +1340,55 @@ main {
   }
   100% {
     transform: translateY(0);
+  }
+}
+
+@keyframes title-sheen {
+  0%,
+  100% {
+    background-position: 110% 0;
+  }
+  45%,
+  55% {
+    background-position: 0% 0;
+  }
+}
+
+@keyframes title-loader {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  35% {
+    opacity: 0.7;
+    transform: scaleX(1);
+  }
+  70% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes segment-load {
+  0%,
+  20% {
+    transform: translateX(-110%);
+  }
+  58%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0.18;
   }
 }
 
