@@ -68,6 +68,7 @@ function addKnownMinGwPaths() {
     "C:\\ProgramData\\chocolatey\\bin",
     "C:\\msys64\\mingw64\\bin",
     "C:\\mingw64\\bin",
+    "C:\\Program Files\\CMake\\bin",
   ].forEach(addToProcessPath);
 }
 
@@ -203,6 +204,28 @@ function tryInstallMinGw() {
   return false;
 }
 
+function tryInstallChocoPackage(packageName, reason) {
+  if (!commandWorks("choco", ["--version"])) {
+    return false;
+  }
+
+  console.log(`${reason} Trying Chocolatey install for ${packageName}...`);
+  const result = run("choco", ["install", packageName, "-y", "--no-progress"], { timeout: 1800000 });
+  return result.status === 0;
+}
+
+function ensureWindowsBuildExecutable(commandName, chocoPackage, manualInstallHint) {
+  addKnownMinGwPaths();
+  if (hasExecutable(commandName)) return;
+
+  tryInstallChocoPackage(chocoPackage, `${commandName} not found.`);
+  addKnownMinGwPaths();
+
+  if (!hasExecutable(commandName)) {
+    throw new Error(manualInstallHint);
+  }
+}
+
 function ensureWindowsGnuToolchain() {
   addKnownMinGwPaths();
 
@@ -216,6 +239,23 @@ function ensureWindowsGnuToolchain() {
       "MinGW/GCC was not found. Install MinGW-w64 or WinLibs and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.",
     );
   }
+
+  ensureWindowsBuildExecutable(
+    "cmake",
+    "cmake",
+    "CMake was not found. Install CMake and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.",
+  );
+  ensureWindowsBuildExecutable(
+    "ninja",
+    "ninja",
+    "Ninja was not found. Install Ninja and add it to PATH, or install Chocolatey and rerun npm run setup.",
+  );
+
+  process.env.CC = process.env.CC || "gcc";
+  process.env.CXX = process.env.CXX || "g++";
+  process.env.CMAKE_GENERATOR = process.env.CMAKE_GENERATOR || "Ninja";
+  process.env.CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER =
+    process.env.CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER || "gcc";
 
   const toolchain = run("rustup", ["toolchain", "install", "stable-x86_64-pc-windows-gnu"], {
     timeout: 600000,
@@ -337,6 +377,14 @@ function ensureCargoContract() {
     ? runWithVcVars(cppBuildEnvironment.vcvarsPath, "cargo", installArgs, { timeout: 1800000 })
     : run("cargo", installArgs, { timeout: 1800000 });
   if (installed.status !== 0) {
+    const requireCargoContract = process.env.PORTALPROOF_REQUIRE_CARGO_CONTRACT === "1";
+    if (isWindows && !requireCargoContract) {
+      console.warn(
+        "Warning: Failed to install cargo-contract on Windows. Local demo can continue; build contract artifacts in CI/Linux, or install MinGW + CMake + Ninja and rerun setup with PORTALPROOF_REQUIRE_CARGO_CONTRACT=1.",
+      );
+      return;
+    }
+
     throw new Error("Failed to install cargo-contract.");
   }
 }
