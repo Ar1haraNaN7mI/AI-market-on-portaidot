@@ -1,6 +1,15 @@
 import { createPortalproofClient, portalproofConfig, toHash32, toLocalIdNumber } from "./portalproof-contract.js";
 
 const walletButton = document.getElementById("walletButton");
+const walletModal = document.getElementById("walletModal");
+const walletForm = document.getElementById("walletForm");
+const walletAddressInput = document.getElementById("walletAddressInput");
+const walletLabelInput = document.getElementById("walletLabelInput");
+const walletModalClose = document.getElementById("walletModalClose");
+const walletCancelButton = document.getElementById("walletCancelButton");
+const disconnectModal = document.getElementById("disconnectModal");
+const disconnectCancelButton = document.getElementById("disconnectCancelButton");
+const disconnectConfirmButton = document.getElementById("disconnectConfirmButton");
 const openExplorerButton = document.getElementById("openExplorerButton");
 const globalSearch = document.getElementById("globalSearch");
 const categoryFilter = document.getElementById("categoryFilter");
@@ -41,6 +50,7 @@ let liveSyncInFlight = false;
 const DEFAULT_WALLET_ADDRESS = "0xB7C2...8811";
 let connectedWalletAddress = DEFAULT_WALLET_ADDRESS;
 const STORAGE_KEY = "portalproof-market-state-v1";
+const WALLET_CACHE_KEY = "portalproof-manual-wallet";
 
 const categories = [
   "Agent",
@@ -431,18 +441,114 @@ function shortAddress(value) {
   return value.length > 11 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value;
 }
 
+function readCachedManualWallet() {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const cached = JSON.parse(localStorage.getItem(WALLET_CACHE_KEY) || "null");
+    return cached?.address ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheManualWallet(account) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(WALLET_CACHE_KEY, JSON.stringify(account));
+}
+
+function openModal(modal, focusTarget) {
+  modal.hidden = false;
+  requestAnimationFrame(() => focusTarget?.focus());
+}
+
+function closeModal(modal) {
+  modal.hidden = true;
+}
+
 function requestManualWallet() {
-  const address = window.prompt("Enter wallet address", connectedWalletAddress === DEFAULT_WALLET_ADDRESS ? "" : connectedWalletAddress);
-  if (!address) return null;
+  return new Promise((resolve) => {
+    const cached = readCachedManualWallet();
+    const currentAddress = connectedWalletAddress === DEFAULT_WALLET_ADDRESS ? "" : connectedWalletAddress;
+    walletAddressInput.value = cached?.address || currentAddress;
+    walletLabelInput.value = cached?.name || "Manual wallet";
 
-  const trimmedAddress = address.trim();
-  if (!trimmedAddress) return null;
+    const cleanup = () => {
+      walletForm.removeEventListener("submit", onSubmit);
+      walletModalClose.removeEventListener("click", onCancel);
+      walletCancelButton.removeEventListener("click", onCancel);
+      walletModal.removeEventListener("mousedown", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
+    };
 
-  const name = window.prompt("Enter wallet label", "Manual wallet")?.trim() || "Manual wallet";
-  return {
-    address: trimmedAddress,
-    name,
-  };
+    const finish = (account) => {
+      cleanup();
+      closeModal(walletModal);
+      resolve(account);
+    };
+
+    const onSubmit = (event) => {
+      event.preventDefault();
+      const trimmedAddress = walletAddressInput.value.trim();
+      if (!trimmedAddress) {
+        walletAddressInput.focus();
+        return;
+      }
+
+      const account = {
+        address: trimmedAddress,
+        name: walletLabelInput.value.trim() || "Manual wallet",
+      };
+      cacheManualWallet(account);
+      finish(account);
+    };
+
+    const onCancel = () => finish(null);
+    const onBackdrop = (event) => {
+      if (event.target === walletModal) onCancel();
+    };
+    const onKeydown = (event) => {
+      if (event.key === "Escape") onCancel();
+    };
+
+    walletForm.addEventListener("submit", onSubmit);
+    walletModalClose.addEventListener("click", onCancel);
+    walletCancelButton.addEventListener("click", onCancel);
+    walletModal.addEventListener("mousedown", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+    openModal(walletModal, walletAddressInput);
+  });
+}
+
+function requestDisconnectConfirmation() {
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      disconnectCancelButton.removeEventListener("click", onCancel);
+      disconnectConfirmButton.removeEventListener("click", onConfirm);
+      disconnectModal.removeEventListener("mousedown", onBackdrop);
+      document.removeEventListener("keydown", onKeydown);
+    };
+
+    const finish = (confirmed) => {
+      cleanup();
+      closeModal(disconnectModal);
+      resolve(confirmed);
+    };
+
+    const onCancel = () => finish(false);
+    const onConfirm = () => finish(true);
+    const onBackdrop = (event) => {
+      if (event.target === disconnectModal) onCancel();
+    };
+    const onKeydown = (event) => {
+      if (event.key === "Escape") onCancel();
+    };
+
+    disconnectCancelButton.addEventListener("click", onCancel);
+    disconnectConfirmButton.addEventListener("click", onConfirm);
+    disconnectModal.addEventListener("mousedown", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+    openModal(disconnectModal, disconnectCancelButton);
+  });
 }
 
 function applyConnectedWalletState(account) {
@@ -1002,14 +1108,15 @@ sellerFilter.innerHTML = ["All", "New Seller", "Verified Seller", "Enterprise Re
 walletButton.addEventListener("click", async () => {
   try {
     if (filters.connected) {
-      if (!window.confirm("Are you sure you want to disconnect?")) {
+      const confirmed = await requestDisconnectConfirmation();
+      if (!confirmed) {
         return;
       }
       applyDisconnectedWalletState();
       return;
     }
 
-    const manualAccount = requestManualWallet();
+    const manualAccount = await requestManualWallet();
     if (!manualAccount) return;
 
     const account = await portalproofClient.connectWallet(manualAccount);

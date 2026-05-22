@@ -288,6 +288,76 @@ main {
   color: var(--text);
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 7, 12, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.wallet-dialog {
+  width: min(100%, 480px);
+  border-color: rgba(87, 183, 255, 0.24);
+}
+
+.confirm-dialog {
+  width: min(100%, 440px);
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.modal-head h2 {
+  margin: 4px 0 0;
+  font-size: 1.22rem;
+}
+
+.modal-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel-alt);
+  color: var(--muted);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.modal-icon-button:hover,
+.modal-icon-button:focus-visible {
+  color: var(--text);
+  border-color: rgba(87, 183, 255, 0.45);
+}
+
+.modal-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+}
+
 .search-bar {
   display: grid;
   gap: 8px;
@@ -827,5 +897,17 @@ main {
   #serviceGrid,
   #agentGrid {
     max-height: 620px;
+  }
+
+  .modal-backdrop {
+    padding: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .button {
+    width: 100%;
   }
 }
