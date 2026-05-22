@@ -226,7 +226,10 @@ mod portalproof_escrow {
             category: Category,
         ) -> ServiceId {
             let service_id = self.next_service_id;
-            self.next_service_id += 1;
+            self.next_service_id = self
+                .next_service_id
+                .checked_add(1)
+                .expect("service id counter overflow");
 
             let service = Service {
                 service_id,
@@ -287,7 +290,10 @@ mod portalproof_escrow {
             }
 
             let order_id = self.next_order_id;
-            self.next_order_id += 1;
+            self.next_order_id = self
+                .next_order_id
+                .checked_add(1)
+                .expect("order id counter overflow");
 
             let buyer = self.env().caller();
             let order = Order {
