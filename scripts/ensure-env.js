@@ -263,6 +263,15 @@ function ensureWindowsGnuToolchain() {
     };
   }
 
+  function skipCargoContractInstall(reason) {
+    console.warn(`Warning: ${reason} Skipping local cargo-contract installation.`);
+    return {
+      cargoPrefixArgs: ["+stable-x86_64-pc-windows-gnu"],
+      vcvarsPath: "",
+      canInstallCargoContract: false,
+    };
+  }
+
   const hasCmake = ensureWindowsBuildExecutable(
     "cmake",
     "cmake",
@@ -288,14 +297,24 @@ function ensureWindowsGnuToolchain() {
     timeout: 600000,
   });
   if (toolchain.status !== 0) {
-    throw new Error("Failed to install Rust GNU toolchain stable-x86_64-pc-windows-gnu.");
+    if (requireCargoContract) {
+      throw new Error("Failed to install Rust GNU toolchain stable-x86_64-pc-windows-gnu.");
+    }
+
+    return skipCargoContractInstall(
+      "Failed to install Rust GNU toolchain stable-x86_64-pc-windows-gnu.",
+    );
   }
 
   const rustSrc = run("rustup", ["component", "add", "rust-src", "--toolchain", "stable-x86_64-pc-windows-gnu"], {
     timeout: 240000,
   });
   if (rustSrc.status !== 0) {
-    throw new Error("Failed to add rust-src component for Rust GNU toolchain.");
+    if (requireCargoContract) {
+      throw new Error("Failed to add rust-src component for Rust GNU toolchain.");
+    }
+
+    return skipCargoContractInstall("Failed to add rust-src component for Rust GNU toolchain.");
   }
 
   const wasmTarget = run(
@@ -304,7 +323,13 @@ function ensureWindowsGnuToolchain() {
     { timeout: 240000 },
   );
   if (wasmTarget.status !== 0) {
-    throw new Error("Failed to add wasm32-unknown-unknown target for Rust GNU toolchain.");
+    if (requireCargoContract) {
+      throw new Error("Failed to add wasm32-unknown-unknown target for Rust GNU toolchain.");
+    }
+
+    return skipCargoContractInstall(
+      "Failed to add wasm32-unknown-unknown target for Rust GNU toolchain.",
+    );
   }
 
   return {
