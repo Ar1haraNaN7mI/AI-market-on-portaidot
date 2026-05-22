@@ -38,7 +38,7 @@ npm run demo
 npm run setup
 ```
 
-The setup step checks Python 3, installs `substrate-interface` when missing, adds Rust `rust-src`, adds the `wasm32-unknown-unknown` target, installs `cargo-contract` when missing, and checks for a C++ compiler required by `cargo-contract`. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
+The setup step checks Python 3, installs `substrate-interface` when missing, adds Rust `rust-src`, adds the `wasm32-unknown-unknown` target, installs `cargo-contract` when missing, and checks for a C++ compiler required by `cargo-contract`. On Windows/MSVC it specifically checks `link.exe`, reuses `vcvarsall.bat` when Visual Studio Build Tools is installed but not on `PATH`, and then tries `winget`/Chocolatey installation before failing with manual Build Tools instructions. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
 
 Then open:
 

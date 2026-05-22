@@ -1,4 +1,6 @@
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const isWindows = process.platform === "win32";
 
@@ -51,6 +53,156 @@ function hasCppCompiler() {
   return compilers.some(hasExecutable);
 }
 
+function getRustHost() {
+  const result = run("rustc", ["-vV"], { quiet: true, timeout: 15000 });
+  if (result.status !== 0) return "";
+
+  const match = result.stdout.match(/^host:\s*(.+)$/m);
+  return match ? match[1] : "";
+}
+
+function findVcVarsAll() {
+  const explicitPath = process.env.VCVARSALL;
+  if (explicitPath && fs.existsSync(explicitPath)) {
+    return explicitPath;
+  }
+
+  const programFilesX86 = process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+  const programFiles = process.env.ProgramFiles || "C:\\Program Files";
+  const vswhereCandidates = [
+    path.join(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe"),
+    path.join(programFiles, "Microsoft Visual Studio", "Installer", "vswhere.exe"),
+  ];
+
+  for (const vswhere of vswhereCandidates) {
+    if (!fs.existsSync(vswhere)) continue;
+
+    const result = run(
+      vswhere,
+      [
+        "-latest",
+        "-products",
+        "*",
+        "-requires",
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property",
+        "installationPath",
+      ],
+      { quiet: true, timeout: 30000 },
+    );
+
+    const installPath = result.stdout.trim();
+    if (result.status === 0 && installPath) {
+      const vcvars = path.join(installPath, "VC", "Auxiliary", "Build", "vcvarsall.bat");
+      if (fs.existsSync(vcvars)) {
+        return vcvars;
+      }
+    }
+  }
+
+  const years = ["2022", "2019", "2017"];
+  const editions = ["BuildTools", "Community", "Professional", "Enterprise"];
+  for (const year of years) {
+    for (const edition of editions) {
+      const vcvars = path.join(
+        programFilesX86,
+        "Microsoft Visual Studio",
+        year,
+        edition,
+        "VC",
+        "Auxiliary",
+        "Build",
+        "vcvarsall.bat",
+      );
+      if (fs.existsSync(vcvars)) {
+        return vcvars;
+      }
+    }
+  }
+
+  return "";
+}
+
+function cmdQuote(value) {
+  return `"${String(value).replace(/"/g, '\\"')}"`;
+}
+
+function runWithVcVars(vcvarsPath, file, args, options = {}) {
+  const command = `call ${cmdQuote(vcvarsPath)} x64 && ${[file, ...args].map(cmdQuote).join(" ")}`;
+  return run("cmd", ["/d", "/s", "/c", command], options);
+}
+
+function tryInstallWindowsBuildTools() {
+  if (commandWorks("winget", ["--version"])) {
+    console.log("MSVC Build Tools not found. Trying winget install for Visual Studio Build Tools...");
+    const result = run(
+      "winget",
+      [
+        "install",
+        "--id",
+        "Microsoft.VisualStudio.2022.BuildTools",
+        "-e",
+        "--silent",
+        "--accept-package-agreements",
+        "--accept-source-agreements",
+        "--override",
+        "--quiet --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended",
+      ],
+      { timeout: 3600000 },
+    );
+    if (result.status === 0) return true;
+  }
+
+  if (commandWorks("choco", ["--version"])) {
+    console.log("MSVC Build Tools not found. Trying Chocolatey install for Visual Studio Build Tools...");
+    const result = run(
+      "choco",
+      ["install", "visualstudio2022buildtools", "visualstudio2022-workload-vctools", "-y", "--no-progress"],
+      { timeout: 3600000 },
+    );
+    if (result.status === 0) return true;
+  }
+
+  return false;
+}
+
+function ensureCppBuildEnvironment() {
+  const rustHost = getRustHost();
+  const usesMsvc = isWindows && rustHost.includes("msvc");
+
+  if (!usesMsvc) {
+    if (!hasCppCompiler()) {
+      throw new Error("cargo-contract requires a C++17 compiler. Install gcc/clang on Linux/macOS or C++ tools on Windows.");
+    }
+    return { vcvarsPath: "" };
+  }
+
+  if (hasExecutable("link")) {
+    return { vcvarsPath: "" };
+  }
+
+  let vcvarsPath = findVcVarsAll();
+  if (vcvarsPath) {
+    console.log(`Using Visual Studio C++ environment from ${vcvarsPath}`);
+    return { vcvarsPath };
+  }
+
+  if (tryInstallWindowsBuildTools()) {
+    vcvarsPath = findVcVarsAll();
+    if (vcvarsPath) {
+      console.log(`Using Visual Studio C++ environment from ${vcvarsPath}`);
+      return { vcvarsPath };
+    }
+    if (hasExecutable("link")) {
+      return { vcvarsPath: "" };
+    }
+  }
+
+  throw new Error(
+    "MSVC linker link.exe was not found. Install Visual Studio Build Tools 2022 with the C++ workload, then rerun npm run setup. Winget command: winget install --id Microsoft.VisualStudio.2022.BuildTools -e --silent --override \"--quiet --wait --norestart --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended\"",
+  );
+}
+
 function ensurePythonSdk() {
   const python = findPython();
   if (!python) {
@@ -91,14 +243,13 @@ function ensureCargoContract() {
     return;
   }
 
-  if (!hasCppCompiler()) {
-    throw new Error(
-      "cargo-contract requires a C++17 compiler. Install Visual Studio Build Tools 2019+ on Windows or gcc/clang on Linux/macOS.",
-    );
-  }
+  const cppBuildEnvironment = ensureCppBuildEnvironment();
 
   console.log("Installing cargo-contract with cargo install --force --locked cargo-contract");
-  const installed = run("cargo", ["install", "--force", "--locked", "cargo-contract"], { timeout: 1800000 });
+  const installArgs = ["install", "--force", "--locked", "cargo-contract"];
+  const installed = cppBuildEnvironment.vcvarsPath
+    ? runWithVcVars(cppBuildEnvironment.vcvarsPath, "cargo", installArgs, { timeout: 1800000 })
+    : run("cargo", installArgs, { timeout: 1800000 });
   if (installed.status !== 0) {
     throw new Error("Failed to install cargo-contract.");
   }
