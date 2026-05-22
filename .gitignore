@@ -6,6 +6,7 @@ __pycache__/
 portalproof-server.pid
 portalproof-server-*.pid
 npm-debug.log*
+output/
 
 # Local encrypted wallet exports / keystores.
 5CHvEZNsgxvbVMCKXYwC4dLw9to35EEFhvYZF4FdfCNZGrvQ.json

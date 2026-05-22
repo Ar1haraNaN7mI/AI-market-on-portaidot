@@ -52,6 +52,7 @@ let connectedWalletAddress = DEFAULT_WALLET_ADDRESS;
 const STORAGE_KEY = "portalproof-market-state-v1";
 const WALLET_CACHE_KEY = "portalproof-manual-wallet";
 const MAX_EXPLORER_ROWS = 120;
+const MAX_RENDERED_EXPLORER_ROWS = 28;
 
 const categories = [
   "Agent",
@@ -753,8 +754,9 @@ function renderExplorer() {
       .toLowerCase()
       .includes(query),
   );
+  const renderedRows = visibleRows.slice(0, MAX_RENDERED_EXPLORER_ROWS);
 
-  explorerBody.innerHTML = visibleRows
+  explorerBody.innerHTML = renderedRows
     .map(
       (row) => `
         <tr>
@@ -772,7 +774,7 @@ function renderExplorer() {
     .join("");
 
   const summary = [
-    ["Recent rows", visibleRows.length],
+    ["Shown rows", renderedRows.length],
     ["Contracts", 1],
     ["Verified", buyerOrderState.filter((order) => order.status === "Released").length],
   ];

@@ -62,12 +62,12 @@
       <nav class="topnav" aria-label="Primary">
         <a href="#home">Home</a>
         <a href="#marketplace">Marketplace</a>
-        <a href="#delivery">Trusted Delivery</a>
-        <a href="#security">Cybersecurity</a>
-        <a href="#agents">Agents & Skills</a>
+        <a href="#delivery">Delivery</a>
+        <a href="#security">Security</a>
+        <a href="#agents">Agents</a>
         <a href="#explorer">Explorer</a>
-        <a href="#seller">Seller Studio</a>
-        <a href="#buyer">Buyer Dashboard</a>
+        <a href="#seller">Seller</a>
+        <a href="#buyer">Buyer</a>
         <a href="#docs">Docs</a>
       </nav>
 
@@ -80,11 +80,16 @@
       <section id="home" class="section hero">
         <div class="container hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow">Portaldot trusted delivery market</p>
-            <h1>Trusted digital delivery on Portaldot</h1>
+            <div class="hero-badge-row" aria-label="Product highlights">
+              <span class="hero-badge">Portaldot native</span>
+              <span class="hero-badge">POT escrow</span>
+              <span class="hero-badge">Demo ready</span>
+            </div>
+            <p class="eyebrow">Trusted delivery market</p>
+            <h1>AI services with verifiable POT settlement</h1>
             <p class="lede">
-              Buy agents, cybersecurity services, and enterprise deliverables
-              with POT escrow, delivery hashes, and on-chain verification.
+              Buy agents, cybersecurity work, and enterprise deliverables through a focused marketplace
+              with escrow, delivery hashes, and on-chain verification.
             </p>
 
             <div class="hero-actions">
@@ -110,21 +115,48 @@
               />
             </label>
 
-            <div class="chip-row" aria-label="Portaldot themes">
-              <span class="chip">Layer0</span>
-              <span class="chip">POT gas</span>
-              <span class="chip">Cross-chain</span>
-              <span class="chip">ZKP</span>
-              <span class="chip">DAO</span>
-              <span class="chip">RWA</span>
-              <span class="chip">AI security</span>
+            <div class="hero-metrics" aria-label="Marketplace summary">
+              <div>
+                <strong>8</strong>
+                <span>Starter listings</span>
+              </div>
+              <div>
+                <strong>5</strong>
+                <span>Escrow stages</span>
+              </div>
+              <div>
+                <strong>POT</strong>
+                <span>Settlement token</span>
+              </div>
             </div>
           </div>
 
-          <aside class="panel hero-panel">
-            <div class="panel-head">
-              <h2>Network snapshot</h2>
-              <span class="status status-live">Live</span>
+          <aside class="panel hero-panel" aria-label="Portaldot delivery console">
+            <div class="panel-head hero-console-head">
+              <div>
+                <p class="eyebrow">Portaldot console</p>
+                <h2>Delivery proof pipeline</h2>
+              </div>
+              <span class="status status-live">Live-ready</span>
+            </div>
+
+            <div class="proof-map" aria-label="Order settlement flow">
+              <div class="proof-node node-buyer">
+                <span>Buyer</span>
+                <strong>Order</strong>
+              </div>
+              <div class="proof-node node-escrow">
+                <span>Escrow</span>
+                <strong>POT</strong>
+              </div>
+              <div class="proof-node node-proof">
+                <span>Proof</span>
+                <strong>Hash</strong>
+              </div>
+              <div class="proof-node node-release">
+                <span>Release</span>
+                <strong>Paid</strong>
+              </div>
             </div>
 
             <div id="statsGrid" class="stats-grid" aria-live="polite"></div>

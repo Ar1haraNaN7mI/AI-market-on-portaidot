@@ -8,7 +8,7 @@ const port = Number(process.env.PORT || 3100);
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "portalproof-smoke-"));
 const requiredMarkers = [
   "PortalProof Market",
-  "Trusted digital delivery on Portaldot",
+  "AI services with verifiable POT settlement",
   "Marketplace",
   "Delivery Explorer",
   "Open Explorer",
