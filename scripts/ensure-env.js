@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const isWindows = process.platform === "win32";
+const setupVersion = "2026-05-22-windows-cargo-contract-soft-fail";
 
 function run(file, args, options = {}) {
   const result = spawnSync(file, args, {
@@ -399,7 +400,7 @@ function checkDocker() {
 }
 
 function main() {
-  console.log("Checking PortalProof demo environment...");
+  console.log(`Checking PortalProof demo environment... (${setupVersion})`);
   ensurePythonSdk();
   ensureRustToolchain();
   ensureCargoContract();
