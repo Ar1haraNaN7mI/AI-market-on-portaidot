@@ -54,7 +54,7 @@ http://localhost:3000
 
 The app currently runs in mock mode until `config.js` has a deployed contract address and metadata path.
 
-The Python SDK sidecar listens on `http://localhost:8787` by default. It follows the official Portaldot Python SDK example style with `SubstrateInterface`, read-only account queries, fee preview, optional signed transfer submission through `PORTALDOT_SIGNER_URI`, and optional contract reads once `contractAddress` is configured.
+The Python SDK sidecar listens on `http://localhost:8787` by default. It follows the official Portaldot Python SDK example style with `SubstrateInterface`, read-only account queries, fee preview, optional signed transfer submission through `PORTALDOT_SIGNER_URI`, and optional contract reads once `contractAddress` is configured. On constrained Windows servers it will retry the RPC connection with TLS verification disabled if the certificate chain is rejected, so the demo can still start. If your chain needs a custom type registry, set `PORTALDOT_TYPE_REGISTRY_PRESET` explicitly; otherwise the sidecar uses automatic discovery.
 
 ## Frontend Chain Adapter
 

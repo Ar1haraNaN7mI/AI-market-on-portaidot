@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import ssl
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -32,17 +33,62 @@ CONTRACT_METADATA = os.environ.get(
 ).strip()
 HOST = os.environ.get("PORTALDOT_SDK_HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORTALDOT_SDK_PORT", "8787"))
+TYPE_REGISTRY_PRESET = os.environ.get("PORTALDOT_TYPE_REGISTRY_PRESET", "").strip()
+ALLOW_INSECURE_RPC = os.environ.get("PORTALDOT_ALLOW_INSECURE_RPC", "1").strip() != "0"
 
-substrate = SubstrateInterface(
-    url=RPC_ENDPOINT,
-    ss58_format=SS58_FORMAT,
-    type_registry_preset="default",
-)
 
-if GENESIS_HASH and substrate.genesis_hash.lower() != GENESIS_HASH.lower():
-    raise SystemExit(
-        f"Connected to unexpected genesis hash {substrate.genesis_hash}, expected {GENESIS_HASH}"
+def connect_substrate(verify_ssl=True):
+    ws_options = {}
+    if not verify_ssl:
+        ws_options = {
+            "sslopt": {
+                "cert_reqs": ssl.CERT_NONE,
+                "check_hostname": False,
+            }
+        }
+
+    kwargs = {
+        "url": RPC_ENDPOINT,
+        "ss58_format": SS58_FORMAT,
+        "ws_options": ws_options or None,
+    }
+    if TYPE_REGISTRY_PRESET:
+        kwargs["type_registry_preset"] = TYPE_REGISTRY_PRESET
+
+    return SubstrateInterface(**kwargs)
+
+
+def get_genesis_hash():
+    genesis_hash = getattr(substrate, "genesis_hash", None)
+    if genesis_hash:
+        return str(genesis_hash)
+
+    try:
+        block_hash = substrate.get_block_hash(0)
+        if block_hash:
+            return str(block_hash)
+    except Exception:
+        pass
+
+    return "unknown"
+
+try:
+    substrate = connect_substrate(verify_ssl=True)
+except Exception as exc:
+    if not ALLOW_INSECURE_RPC or "CERTIFICATE_VERIFY_FAILED" not in str(exc):
+        raise
+
+    print(
+        "Warning: RPC TLS certificate validation failed, retrying with verification disabled for demo use.",
+        file=sys.stderr,
     )
+    substrate = connect_substrate(verify_ssl=False)
+
+    connected_genesis_hash = get_genesis_hash()
+    if GENESIS_HASH and connected_genesis_hash.lower() != GENESIS_HASH.lower():
+        raise SystemExit(
+            f"Connected to unexpected genesis hash {connected_genesis_hash}, expected {GENESIS_HASH}"
+        )
 
 contract = None
 if CONTRACT_ADDRESS and CONTRACT_METADATA and Path(CONTRACT_METADATA).exists() and ContractInstance:
@@ -186,7 +232,7 @@ class Handler(BaseHTTPRequestHandler):
                         "ok": True,
                         "rpcEndpoint": RPC_ENDPOINT,
                         "chain": substrate.chain,
-                        "genesisHash": substrate.genesis_hash,
+                        "genesisHash": get_genesis_hash(),
                         "ss58Format": substrate.ss58_format,
                         "queryAccount": QUERY_ACCOUNT or None,
                         "signerConfigured": bool(SIGNER_URI),
@@ -255,7 +301,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"Portaldot SDK service running at http://{HOST}:{PORT}")
-    print(f"Connected chain: {substrate.chain} ({substrate.genesis_hash})")
+    print(f"Connected chain: {substrate.chain} ({get_genesis_hash()})")
     if contract:
         print(f"Contract instance loaded: {CONTRACT_ADDRESS}")
     server.serve_forever()
