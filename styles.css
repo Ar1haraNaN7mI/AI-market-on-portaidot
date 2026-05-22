@@ -230,14 +230,57 @@ main {
   animation: scan-line 4.5s ease-in-out infinite;
 }
 
-.hero-canvas {
+.hero-abstract {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.56;
-  mix-blend-mode: screen;
+  overflow: hidden;
   pointer-events: none;
+}
+
+.abstract-arc {
+  position: absolute;
+  border: 1px solid rgba(204, 224, 244, 0.18);
+  border-radius: 50%;
+}
+
+.arc-a {
+  width: min(62vw, 820px);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  border-top-color: rgba(102, 195, 255, 0.32);
+  border-bottom-color: rgba(101, 230, 164, 0.14);
+}
+
+.arc-b {
+  width: min(36vw, 480px);
+  aspect-ratio: 1;
+  right: 7%;
+  top: 16%;
+  border-left-color: transparent;
+  border-bottom-color: rgba(240, 184, 91, 0.12);
+}
+
+.abstract-line {
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(204, 224, 244, 0.2), transparent);
+  transform-origin: center;
+}
+
+.line-a {
+  width: 68vw;
+  left: 14%;
+  top: 48%;
+  transform: rotate(-8deg);
+}
+
+.line-b {
+  width: 42vw;
+  right: 8%;
+  top: 70%;
+  transform: rotate(12deg);
 }
 
 .hero-grid,
@@ -254,9 +297,9 @@ main {
 .hero-grid {
   position: relative;
   z-index: 1;
-  grid-template-columns: minmax(0, 0.96fr) minmax(460px, 1.04fr);
-  align-items: stretch;
-  gap: clamp(22px, 4vw, 58px);
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 30px;
 }
 
 .two-column {
@@ -355,13 +398,20 @@ main {
   line-height: 1.1;
 }
 
+.hero-copy {
+  max-width: 980px;
+  margin: 0 auto;
+  text-align: center;
+}
+
 .hero-copy h1 {
   display: grid;
   gap: 4px;
   font-size: clamp(3rem, 6.2vw, 6rem);
-  max-width: 12.5ch;
+  max-width: none;
   letter-spacing: 0;
   color: #f5fbff;
+  justify-items: center;
 }
 
 .hero-title-line {
@@ -475,6 +525,13 @@ main {
 .hero-panel {
   position: relative;
   overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 16px;
+  width: min(100%, 1120px);
+  margin: 4px auto 0;
+  background: rgba(13, 23, 33, 0.72);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.2);
   animation-delay: 80ms;
 }
 
@@ -496,6 +553,7 @@ main {
 .hero-metrics {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 
@@ -538,6 +596,7 @@ main {
 .hero-ticker {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
   margin-top: 18px;
   color: #c7d9ea;
@@ -568,6 +627,7 @@ main {
 }
 
 .hero-console-head {
+  grid-column: 1 / -1;
   align-items: start;
 }
 
@@ -583,6 +643,27 @@ main {
   background:
     linear-gradient(90deg, rgba(102, 195, 255, 0.12), transparent 38%, rgba(101, 230, 164, 0.11)),
     rgba(6, 14, 22, 0.48);
+}
+
+.settlement-lane,
+.proof-map {
+  grid-column: 1;
+}
+
+.hero-panel .stats-grid,
+.hero-panel .mini-chart {
+  grid-column: 2;
+}
+
+.hero-panel .detail-list,
+.hero-panel .readiness-block {
+  grid-column: 1 / -1;
+}
+
+.hero-panel .detail-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0 18px;
 }
 
 .proof-map::before {
@@ -654,9 +735,9 @@ main {
 }
 
 .lede {
-  max-width: 54ch;
+  max-width: 64ch;
   color: var(--muted);
-  margin: 18px 0 0;
+  margin: 18px auto 0;
   font-size: 1.12rem;
 }
 
@@ -679,6 +760,7 @@ main {
 }
 
 .hero-actions {
+  justify-content: center;
   margin: 24px 0 18px;
 }
 
@@ -794,6 +876,10 @@ main {
 .search-bar {
   display: grid;
   gap: 8px;
+  width: min(100%, 760px);
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
 }
 
 .search-bar span,
@@ -1465,6 +1551,27 @@ main {
     grid-template-columns: 1fr 1fr;
   }
 
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .settlement-lane,
+  .proof-map,
+  .hero-panel .stats-grid,
+  .hero-panel .mini-chart,
+  .hero-panel .detail-list,
+  .hero-panel .readiness-block {
+    grid-column: 1;
+  }
+
+  .hero-panel .detail-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .hero-copy h1 {
     max-width: 100%;
     font-size: 2.4rem;
@@ -1539,5 +1646,9 @@ main {
 
   .proof-map::before {
     display: none;
+  }
+
+  .hero-panel .detail-list {
+    grid-template-columns: 1fr;
   }
 }

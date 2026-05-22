@@ -1,7 +1,6 @@
 import { createPortalproofClient, portalproofConfig, toHash32, toLocalIdNumber } from "./portalproof-contract.js";
 
 const walletButton = document.getElementById("walletButton");
-const heroCanvas = document.getElementById("heroCanvas");
 const walletModal = document.getElementById("walletModal");
 const walletForm = document.getElementById("walletForm");
 const walletAddressInput = document.getElementById("walletAddressInput");
@@ -362,83 +361,6 @@ chainMode.textContent = portalproofClient.mode === "live" ? "Live contract" : "M
 chainMode.classList.toggle("status-success", portalproofClient.mode === "live");
 if (openExplorerButton) {
   openExplorerButton.href = portalproofConfig.explorerUrl;
-}
-
-function initHeroCanvas() {
-  if (!heroCanvas) return;
-
-  const context = heroCanvas.getContext("2d");
-  if (!context) return;
-
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const points = Array.from({ length: 34 }, (_, index) => ({
-    x: (index % 9) / 8,
-    y: Math.floor(index / 9) / 4 + Math.random() * 0.08,
-    drift: 0.14 + Math.random() * 0.28,
-    phase: Math.random() * Math.PI * 2,
-  }));
-
-  let width = 0;
-  let height = 0;
-  let animationFrame = 0;
-
-  function resize() {
-    const rect = heroCanvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    width = Math.max(1, rect.width);
-    height = Math.max(1, rect.height);
-    heroCanvas.width = Math.floor(width * dpr);
-    heroCanvas.height = Math.floor(height * dpr);
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function draw(time = 0) {
-    context.clearRect(0, 0, width, height);
-    context.lineWidth = 1;
-
-    const projected = points.map((point) => {
-      const motion = prefersReducedMotion ? 0 : Math.sin(time * 0.00035 * point.drift + point.phase) * 18;
-      return {
-        x: point.x * width + motion,
-        y: point.y * height + Math.cos(time * 0.00028 * point.drift + point.phase) * 12,
-      };
-    });
-
-    for (let i = 0; i < projected.length; i += 1) {
-      for (let j = i + 1; j < projected.length; j += 1) {
-        const a = projected[i];
-        const b = projected[j];
-        const distance = Math.hypot(a.x - b.x, a.y - b.y);
-        if (distance > 190) continue;
-
-        const alpha = (1 - distance / 190) * 0.16;
-        context.strokeStyle = `rgba(102, 195, 255, ${alpha})`;
-        context.beginPath();
-        context.moveTo(a.x, a.y);
-        context.lineTo(b.x, b.y);
-        context.stroke();
-      }
-    }
-
-    projected.forEach((point, index) => {
-      context.fillStyle = index % 5 === 0 ? "rgba(101, 230, 164, 0.34)" : "rgba(151, 180, 207, 0.22)";
-      context.beginPath();
-      context.arc(point.x, point.y, index % 5 === 0 ? 2.2 : 1.3, 0, Math.PI * 2);
-      context.fill();
-    });
-
-    if (!prefersReducedMotion) {
-      animationFrame = window.requestAnimationFrame(draw);
-    }
-  }
-
-  resize();
-  draw();
-  window.addEventListener("resize", () => {
-    window.cancelAnimationFrame(animationFrame);
-    resize();
-    draw();
-  });
 }
 
 async function saveLocalState() {
@@ -1495,7 +1417,6 @@ releaseBtn.addEventListener("click", async () => {
 });
 
 async function initApp() {
-  initHeroCanvas();
   const restored = await loadLocalState();
   refreshAll();
   if (!restored) {
