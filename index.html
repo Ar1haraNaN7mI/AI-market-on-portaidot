@@ -79,19 +79,13 @@
     <main id="mainContent">
       <section id="home" class="section hero">
         <div class="hero-abstract" aria-hidden="true">
-          <span class="abstract-arc arc-a"></span>
-          <span class="abstract-arc arc-b"></span>
-          <span class="abstract-line line-a"></span>
-          <span class="abstract-line line-b"></span>
+          <span class="hero-ghost ghost-left">PORTALDOT</span>
+          <span class="hero-ghost ghost-right">PROOF</span>
+          <span class="moon-core"></span>
         </div>
         <div class="container hero-grid">
           <div class="hero-copy">
-            <div class="hero-badge-row" aria-label="Product highlights">
-              <span class="hero-badge">Portaldot native</span>
-              <span class="hero-badge">POT escrow</span>
-              <span class="hero-badge">On-chain proof</span>
-            </div>
-            <p class="eyebrow">PortalProof command center</p>
+            <p class="eyebrow">PortalProof Market</p>
             <h1>
               <span class="hero-title-line">Proof-first</span>
               <span class="hero-title-line">work market.</span>
@@ -104,18 +98,20 @@
                 </span>
               </span>
             </h1>
-            <div class="title-loader-row" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
             <p class="lede">
               A cleaner Portaldot marketplace workspace for ordering agents, audits, and enterprise
               deliverables with a visible escrow-to-release trail.
             </p>
+
+            <label class="hero-prompt" for="globalSearch">
+              <span class="sr-only">Search services</span>
+              <input
+                id="globalSearch"
+                type="search"
+                placeholder="Search agents, audits, skills, reports, delivery proofs"
+              />
+              <span class="prompt-send" aria-hidden="true">↑</span>
+            </label>
 
             <div class="hero-actions">
               <a class="button button-primary" href="#marketplace">Explore Market</a>
@@ -130,15 +126,6 @@
                 Open Explorer
               </a>
             </div>
-
-            <label class="search-bar" for="globalSearch">
-              <span>Search</span>
-              <input
-                id="globalSearch"
-                type="search"
-                placeholder="Search agents, audits, skills, reports, delivery proofs"
-              />
-            </label>
 
             <div class="hero-metrics" aria-label="Marketplace summary">
               <div>
@@ -163,10 +150,10 @@
           </div>
 
           <aside class="panel hero-panel" aria-label="Portaldot delivery console">
-            <div class="panel-head hero-console-head">
+            <div class="hero-console-head">
               <div>
                 <p class="eyebrow">Portaldot console</p>
-                <h2>Delivery proof pipeline</h2>
+                <h2>Escrow pipeline</h2>
               </div>
               <span class="status status-live">Live-ready</span>
             </div>
@@ -190,23 +177,7 @@
               </div>
             </div>
 
-            <div class="settlement-lane" aria-label="Settlement animation">
-              <span class="lane-track"></span>
-              <span class="lane-pulse pulse-a"></span>
-              <span class="lane-pulse pulse-b"></span>
-              <span class="lane-pulse pulse-c"></span>
-            </div>
-
             <div id="statsGrid" class="stats-grid" aria-live="polite"></div>
-
-            <div class="mini-chart" aria-label="Market activity preview">
-              <div class="mini-chart-bar bar-a"></div>
-              <div class="mini-chart-bar bar-b"></div>
-              <div class="mini-chart-bar bar-c"></div>
-              <div class="mini-chart-bar bar-d"></div>
-              <div class="mini-chart-bar bar-e"></div>
-              <div class="mini-chart-bar bar-f"></div>
-            </div>
 
             <div class="detail-list">
               <div>
