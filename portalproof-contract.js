@@ -191,12 +191,16 @@ class MockPortalproofContractClient {
     this.account = null;
   }
 
-  async connectWallet() {
+  async connectWallet(manualAccount = {}) {
     this.account = {
-      address: "0xB7C2...8811",
-      name: "Mock buyer",
+      address: manualAccount.address || "0xB7C2...8811",
+      name: manualAccount.name || "Manual mock wallet",
     };
     return this.account;
+  }
+
+  disconnectWallet() {
+    this.account = null;
   }
 
   async createService(service) {
@@ -280,9 +284,18 @@ class LivePortalproofContractClient {
     this.contract = new ContractPromise(this.api, metadata, this.config.contractAddress);
   }
 
-  async connectWallet() {
+  async connectWallet(manualAccount = null) {
     if (!this.modules) {
       await this.init();
+    }
+
+    if (manualAccount?.address) {
+      this.account = {
+        address: manualAccount.address,
+        name: manualAccount.name || "Manual wallet",
+      };
+      this.injector = null;
+      return this.account;
     }
 
     const extensions = await this.modules.web3Enable(this.config.appName);
@@ -300,12 +313,20 @@ class LivePortalproofContractClient {
     return this.account;
   }
 
-  async ensureReady() {
+  disconnectWallet() {
+    this.account = null;
+    this.injector = null;
+  }
+
+  async ensureReady({ requireSigner = true } = {}) {
     if (!this.contract || !this.api) {
       await this.init();
     }
-    if (!this.account || !this.injector) {
+    if (!this.account) {
       await this.connectWallet();
+    }
+    if (requireSigner && !this.injector) {
+      throw new Error("Manual wallet is connected for reads only. Use a browser wallet extension to sign live transactions.");
     }
   }
 
@@ -366,7 +387,7 @@ class LivePortalproofContractClient {
   }
 
   async getService(serviceId) {
-    await this.ensureReady();
+    await this.ensureReady({ requireSigner: false });
     const caller = this.account?.address ?? this.config.queryAccount;
     if (!caller) {
       throw new Error("Connect a wallet or set queryAccount in config.js to read live state");
@@ -391,7 +412,7 @@ class LivePortalproofContractClient {
   }
 
   async getOrder(orderId) {
-    await this.ensureReady();
+    await this.ensureReady({ requireSigner: false });
     const caller = this.account?.address ?? this.config.queryAccount;
     if (!caller) {
       throw new Error("Connect a wallet or set queryAccount in config.js to read live state");
@@ -416,7 +437,7 @@ class LivePortalproofContractClient {
   }
 
   async getOwner() {
-    await this.ensureReady();
+    await this.ensureReady({ requireSigner: false });
     const caller = this.account?.address ?? this.config.queryAccount;
     if (!caller) {
       throw new Error("Connect a wallet or set queryAccount in config.js to read live state");

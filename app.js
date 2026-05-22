@@ -38,7 +38,8 @@ const networkName = document.getElementById("networkName");
 const chainMode = document.getElementById("chainMode");
 const portalproofClient = createPortalproofClient(portalproofConfig);
 let liveSyncInFlight = false;
-let connectedWalletAddress = "0xB7C2...8811";
+const DEFAULT_WALLET_ADDRESS = "0xB7C2...8811";
+let connectedWalletAddress = DEFAULT_WALLET_ADDRESS;
 const STORAGE_KEY = "portalproof-market-state-v1";
 
 const categories = [
@@ -428,6 +429,44 @@ async function resetLocalState() {
 
 function shortAddress(value) {
   return value.length > 11 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value;
+}
+
+function requestManualWallet() {
+  const address = window.prompt("Enter wallet address", connectedWalletAddress === DEFAULT_WALLET_ADDRESS ? "" : connectedWalletAddress);
+  if (!address) return null;
+
+  const trimmedAddress = address.trim();
+  if (!trimmedAddress) return null;
+
+  const name = window.prompt("Enter wallet label", "Manual wallet")?.trim() || "Manual wallet";
+  return {
+    address: trimmedAddress,
+    name,
+  };
+}
+
+function applyConnectedWalletState(account) {
+  connectedWalletAddress = account.address;
+  filters.connected = true;
+  walletButton.textContent = account.address.length > 14 ? shortAddress(account.address) : account.address;
+  walletButton.classList.add("button-primary");
+  walletButton.classList.remove("button-secondary");
+  chainMode.textContent = portalproofClient.mode === "live" ? "Live wallet" : "Mock wallet";
+
+  const buyerField = orderForm.querySelector('[name="buyerAddress"]');
+  if (buyerField) {
+    buyerField.value = connectedWalletAddress;
+  }
+}
+
+function applyDisconnectedWalletState(message = "Wallet disconnected") {
+  portalproofClient.disconnectWallet?.();
+  connectedWalletAddress = DEFAULT_WALLET_ADDRESS;
+  filters.connected = false;
+  walletButton.textContent = "Connect Wallet";
+  walletButton.classList.remove("button-primary");
+  walletButton.classList.add("button-secondary");
+  chainMode.textContent = message;
 }
 
 function shortText(value, limit = 48) {
@@ -962,26 +1001,25 @@ sellerFilter.innerHTML = ["All", "New Seller", "Verified Seller", "Enterprise Re
 
 walletButton.addEventListener("click", async () => {
   try {
-    const account = await portalproofClient.connectWallet();
-    connectedWalletAddress = account.address;
-    filters.connected = true;
-    walletButton.textContent = account.address.length > 14 ? shortAddress(account.address) : account.address;
-    walletButton.classList.add("button-primary");
-    walletButton.classList.remove("button-secondary");
-    chainMode.textContent = portalproofClient.mode === "live" ? "Live wallet" : "Mock wallet";
-    const buyerField = orderForm.querySelector('[name="buyerAddress"]');
-    if (buyerField) {
-      buyerField.value = connectedWalletAddress;
+    if (filters.connected) {
+      if (!window.confirm("Are you sure you want to disconnect?")) {
+        return;
+      }
+      applyDisconnectedWalletState();
+      return;
     }
+
+    const manualAccount = requestManualWallet();
+    if (!manualAccount) return;
+
+    const account = await portalproofClient.connectWallet(manualAccount);
+    applyConnectedWalletState(account);
+
     if (portalproofClient.mode === "live") {
       await hydrateLiveState();
     }
   } catch (error) {
-    filters.connected = false;
-    walletButton.textContent = "Connect Wallet";
-    walletButton.classList.remove("button-primary");
-    walletButton.classList.add("button-secondary");
-    chainMode.textContent = error.message;
+    applyDisconnectedWalletState(error.message);
   }
 });
 
