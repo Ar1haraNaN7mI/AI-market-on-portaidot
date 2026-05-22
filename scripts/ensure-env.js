@@ -5,6 +5,10 @@ const path = require("node:path");
 const isWindows = process.platform === "win32";
 const setupVersion = "2026-05-22-windows-cargo-contract-soft-fail";
 
+function isCargoContractRequired() {
+  return process.env.PORTALPROOF_REQUIRE_CARGO_CONTRACT === "1";
+}
+
 function run(file, args, options = {}) {
   const result = spawnSync(file, args, {
     stdio: options.quiet ? "pipe" : "inherit",
@@ -215,19 +219,28 @@ function tryInstallChocoPackage(packageName, reason) {
   return result.status === 0;
 }
 
-function ensureWindowsBuildExecutable(commandName, chocoPackage, manualInstallHint) {
+function ensureWindowsBuildExecutable(commandName, chocoPackage, manualInstallHint, required) {
   addKnownMinGwPaths();
-  if (hasExecutable(commandName)) return;
+  if (hasExecutable(commandName)) return true;
 
   tryInstallChocoPackage(chocoPackage, `${commandName} not found.`);
   addKnownMinGwPaths();
 
   if (!hasExecutable(commandName)) {
-    throw new Error(manualInstallHint);
+    if (required) {
+      throw new Error(manualInstallHint);
+    }
+
+    console.warn(`Warning: ${manualInstallHint} Skipping local cargo-contract installation.`);
+    return false;
   }
+
+  return true;
 }
 
 function ensureWindowsGnuToolchain() {
+  const requireCargoContract = isCargoContractRequired();
+
   addKnownMinGwPaths();
 
   if (!hasGnuCompiler()) {
@@ -236,25 +249,38 @@ function ensureWindowsGnuToolchain() {
   }
 
   if (!hasGnuCompiler()) {
-    throw new Error(
-      "MinGW/GCC was not found. Install MinGW-w64 or WinLibs and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.",
-    );
+    const message =
+      "MinGW/GCC was not found. Install MinGW-w64 or WinLibs and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.";
+    if (requireCargoContract) {
+      throw new Error(message);
+    }
+
+    console.warn(`Warning: ${message} Skipping local cargo-contract installation.`);
+    return {
+      cargoPrefixArgs: ["+stable-x86_64-pc-windows-gnu"],
+      vcvarsPath: "",
+      canInstallCargoContract: false,
+    };
   }
 
-  ensureWindowsBuildExecutable(
+  const hasCmake = ensureWindowsBuildExecutable(
     "cmake",
     "cmake",
     "CMake was not found. Install CMake and add its bin directory to PATH, or install Chocolatey and rerun npm run setup.",
+    requireCargoContract,
   );
-  ensureWindowsBuildExecutable(
+  const hasNinja = ensureWindowsBuildExecutable(
     "ninja",
     "ninja",
     "Ninja was not found. Install Ninja and add it to PATH, or install Chocolatey and rerun npm run setup.",
+    requireCargoContract,
   );
 
   process.env.CC = process.env.CC || "gcc";
   process.env.CXX = process.env.CXX || "g++";
-  process.env.CMAKE_GENERATOR = process.env.CMAKE_GENERATOR || "Ninja";
+  if (hasNinja) {
+    process.env.CMAKE_GENERATOR = process.env.CMAKE_GENERATOR || "Ninja";
+  }
   process.env.CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER =
     process.env.CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER || "gcc";
 
@@ -284,6 +310,7 @@ function ensureWindowsGnuToolchain() {
   return {
     cargoPrefixArgs: ["+stable-x86_64-pc-windows-gnu"],
     vcvarsPath: "",
+    canInstallCargoContract: hasCmake && hasNinja,
   };
 }
 
@@ -372,14 +399,20 @@ function ensureCargoContract() {
 
   const cppBuildEnvironment = ensureCppBuildEnvironment();
 
+  if (cppBuildEnvironment.canInstallCargoContract === false && isWindows && !isCargoContractRequired()) {
+    console.warn(
+      "Warning: Skipping local cargo-contract installation on Windows because required native build tools are missing. Local demo can continue; CI/Linux builds contract artifacts.",
+    );
+    return;
+  }
+
   console.log("Installing cargo-contract with cargo install --force --locked cargo-contract");
   const installArgs = [...(cppBuildEnvironment.cargoPrefixArgs || []), "install", "--force", "--locked", "cargo-contract"];
   const installed = cppBuildEnvironment.vcvarsPath
     ? runWithVcVars(cppBuildEnvironment.vcvarsPath, "cargo", installArgs, { timeout: 1800000 })
     : run("cargo", installArgs, { timeout: 1800000 });
   if (installed.status !== 0) {
-    const requireCargoContract = process.env.PORTALPROOF_REQUIRE_CARGO_CONTRACT === "1";
-    if (isWindows && !requireCargoContract) {
+    if (isWindows && !isCargoContractRequired()) {
       console.warn(
         "Warning: Failed to install cargo-contract on Windows. Local demo can continue; build contract artifacts in CI/Linux, or install MinGW + CMake + Ninja and rerun setup with PORTALPROOF_REQUIRE_CARGO_CONTRACT=1.",
       );

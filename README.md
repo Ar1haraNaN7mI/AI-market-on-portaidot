@@ -42,7 +42,7 @@ The setup step checks Python 3, installs `substrate-interface` when missing, add
 
 On Windows, setup defaults to the lighter GNU/MinGW path so a small cloud server does not need Visual Studio Build Tools. It checks for `gcc`, `g++`, `cmake`, and `ninja`, tries Chocolatey installation for missing tools when Chocolatey is available, installs `stable-x86_64-pc-windows-gnu`, and installs `cargo-contract` through that Rust GNU toolchain. If Chocolatey is not installed, install MinGW-w64 or WinLibs, CMake, and Ninja manually and add their `bin` directories to `PATH`, then rerun `npm run setup`.
 
-`cargo-contract` compiles `wasm-opt-sys`/Binaryen during installation and can still fail on constrained Windows Server machines. On Windows, setup treats that as non-blocking so the local demo can still start. CI/Linux remains the recommended path for producing contract artifacts. Set `PORTALPROOF_REQUIRE_CARGO_CONTRACT=1` if you want setup to fail hard until `cargo-contract` is installed locally.
+`cargo-contract` compiles `wasm-opt-sys`/Binaryen during installation and can still fail on constrained Windows Server machines. On Windows, setup treats missing native build tools or `cargo-contract` installation failure as non-blocking so the local demo can still start. CI/Linux remains the recommended path for producing contract artifacts. Set `PORTALPROOF_REQUIRE_CARGO_CONTRACT=1` if you want setup to fail hard until `cargo-contract` is installed locally.
 
 If you intentionally want to use Visual Studio Build Tools instead, set `PORTALPROOF_WINDOWS_CPP=msvc` before running setup. Set `PORTALPROOF_SKIP_ENV_SETUP=1` if you need to bypass setup in a preconfigured environment.
 
