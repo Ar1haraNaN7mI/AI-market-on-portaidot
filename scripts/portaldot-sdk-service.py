@@ -122,11 +122,24 @@ def to_plain(value):
 
 
 def query_account(address):
-    result = substrate.query("System", "Account", [address])
-    return {
+    account_info = {
         "address": address,
-        "account": to_plain(result.value),
+        "account": None,
+        "nonce": None,
     }
+
+    try:
+        result = substrate.query("System", "Account", [address])
+        account_info["account"] = to_plain(result.value)
+    except Exception as exc:
+        account_info["error"] = str(exc)
+
+    try:
+        account_info["nonce"] = substrate.get_account_nonce(address)
+    except Exception as exc:
+        account_info.setdefault("error", str(exc))
+
+    return account_info
 
 
 def payment_preview(dest, value, signer_address):
