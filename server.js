@@ -21,10 +21,35 @@ const types = {
   ".md": "text/markdown; charset=utf-8",
 };
 
+const securityHeaders = {
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "img-src 'self' data:",
+    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
+    "worker-src 'self' blob:",
+    "connect-src 'self' http://localhost:* http://127.0.0.1:* ws: wss: https://cdn.jsdelivr.net",
+  ].join("; "),
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+};
+
+function withSecurityHeaders(headers = {}) {
+  return {
+    ...securityHeaders,
+    ...headers,
+  };
+}
+
 function sendJson(response, statusCode, payload) {
-  response.writeHead(statusCode, {
+  response.writeHead(statusCode, withSecurityHeaders({
     "Content-Type": "application/json; charset=utf-8",
-  });
+  }));
   response.end(JSON.stringify(payload));
 }
 
@@ -272,14 +297,14 @@ function serveStatic(url, response) {
   const filePath = path.normalize(path.join(root, requestedPath));
 
   if (!filePath.startsWith(root)) {
-    response.writeHead(403);
+    response.writeHead(403, withSecurityHeaders());
     response.end("Forbidden");
     return;
   }
 
   fs.readFile(filePath, (error, data) => {
     if (error) {
-      response.writeHead(404);
+      response.writeHead(404, withSecurityHeaders());
       response.end("Not found");
       return;
     }
@@ -287,11 +312,10 @@ function serveStatic(url, response) {
     const extension = path.extname(filePath);
     const cacheControl = extension === ".html" ? "no-cache" : "public, max-age=3600";
 
-    response.writeHead(200, {
+    response.writeHead(200, withSecurityHeaders({
       "Content-Type": types[extension] || "application/octet-stream",
       "Cache-Control": cacheControl,
-      "X-Content-Type-Options": "nosniff",
-    });
+    }));
     response.end(data);
   });
 }

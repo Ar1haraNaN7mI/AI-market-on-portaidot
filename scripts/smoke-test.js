@@ -31,7 +31,7 @@ function request(path) {
         body += chunk;
       });
       res.on("end", () => {
-        resolve({ statusCode: res.statusCode, body });
+        resolve({ statusCode: res.statusCode, headers: res.headers, body });
       });
     });
 
@@ -102,6 +102,14 @@ async function main() {
 
     if (response.statusCode !== 200) {
       throw new Error(`Expected HTTP 200, got ${response.statusCode}`);
+    }
+
+    if (!response.headers["content-security-policy"]) {
+      throw new Error("Missing Content-Security-Policy header");
+    }
+
+    if (response.headers["x-frame-options"] !== "DENY") {
+      throw new Error("Missing anti-clickjacking X-Frame-Options header");
     }
 
     for (const marker of requiredMarkers) {

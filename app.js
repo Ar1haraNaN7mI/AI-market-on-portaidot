@@ -1,6 +1,7 @@
 import { createPortalproofClient, portalproofConfig, toHash32, toLocalIdNumber } from "./portalproof-contract.js";
 
 const walletButton = document.getElementById("walletButton");
+const moonCore = document.getElementById("moonCore");
 const walletModal = document.getElementById("walletModal");
 const walletForm = document.getElementById("walletForm");
 const walletAddressInput = document.getElementById("walletAddressInput");
@@ -361,6 +362,34 @@ chainMode.textContent = portalproofClient.mode === "live" ? "Live contract" : "M
 chainMode.classList.toggle("status-success", portalproofClient.mode === "live");
 if (openExplorerButton) {
   openExplorerButton.href = portalproofConfig.explorerUrl;
+}
+
+function initMoonLight() {
+  if (!moonCore) return;
+
+  const maxOffset = 34;
+  const setLight = (event) => {
+    const rect = moonCore.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    const distance = Math.hypot(dx, dy) || 1;
+    const offset = Math.min(maxOffset, distance * 0.18);
+    const x = (dx / distance) * offset;
+    const y = (dy / distance) * offset;
+
+    moonCore.style.setProperty("--moon-x", `${x}px`);
+    moonCore.style.setProperty("--moon-y", `${y}px`);
+  };
+
+  const resetLight = () => {
+    moonCore.style.setProperty("--moon-x", "0px");
+    moonCore.style.setProperty("--moon-y", "0px");
+  };
+
+  window.addEventListener("pointermove", setLight, { passive: true });
+  window.addEventListener("pointerleave", resetLight);
 }
 
 async function saveLocalState() {
@@ -1417,6 +1446,7 @@ releaseBtn.addEventListener("click", async () => {
 });
 
 async function initApp() {
+  initMoonLight();
   const restored = await loadLocalState();
   refreshAll();
   if (!restored) {
