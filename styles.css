@@ -618,17 +618,11 @@ main {
 
 .hero-panel .detail-list,
 .hero-panel .readiness-block {
-  display: none;
+  display: none !important;
 }
 
 .hero-panel .proof-node span {
   display: none;
-}
-
-.hero-panel .detail-list {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0 12px;
 }
 
 .proof-map::before {
@@ -1425,13 +1419,8 @@ main {
 
   .proof-map,
   .hero-panel .stats-grid,
-  .hero-panel .detail-list,
   .hero-panel .readiness-block {
     grid-column: 1;
-  }
-
-  .hero-panel .detail-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hero-copy h1 {
@@ -1562,7 +1551,4 @@ main {
     display: none;
   }
 
-  .hero-panel .detail-list {
-    grid-template-columns: 1fr;
-  }
 }
