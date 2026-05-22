@@ -284,8 +284,13 @@ function serveStatic(url, response) {
       return;
     }
 
+    const extension = path.extname(filePath);
+    const cacheControl = extension === ".html" ? "no-cache" : "public, max-age=3600";
+
     response.writeHead(200, {
-      "Content-Type": types[path.extname(filePath)] || "application/octet-stream",
+      "Content-Type": types[extension] || "application/octet-stream",
+      "Cache-Control": cacheControl,
+      "X-Content-Type-Options": "nosniff",
     });
     response.end(data);
   });

@@ -51,6 +51,7 @@ const DEFAULT_WALLET_ADDRESS = "0xB7C2...8811";
 let connectedWalletAddress = DEFAULT_WALLET_ADDRESS;
 const STORAGE_KEY = "portalproof-market-state-v1";
 const WALLET_CACHE_KEY = "portalproof-manual-wallet";
+const MAX_EXPLORER_ROWS = 120;
 
 const categories = [
   "Agent",
@@ -343,6 +344,17 @@ const filters = {
   connected: false,
 };
 
+function debounce(callback, delay = 90) {
+  let timeoutId = 0;
+  return (...args) => {
+    window.clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => callback(...args), delay);
+  };
+}
+
+const renderServicesDeferred = debounce(renderServices);
+const renderExplorerDeferred = debounce(renderExplorer);
+
 networkName.textContent = portalproofConfig.networkName;
 chainMode.textContent = portalproofClient.mode === "live" ? "Live contract" : "Mock mode";
 chainMode.classList.toggle("status-success", portalproofClient.mode === "live");
@@ -391,6 +403,7 @@ async function loadLocalState() {
         buyerOrderState = Array.isArray(parsed.buyerOrderState) ? parsed.buyerOrderState : buyerOrderState;
         incomingOrderState = Array.isArray(parsed.incomingOrderState) ? parsed.incomingOrderState : incomingOrderState;
         explorerRows = Array.isArray(parsed.explorerRows) ? parsed.explorerRows : explorerRows;
+        trimExplorerRows();
         Object.assign(sampleOrder, parsed.sampleOrder || {});
         return true;
       }
@@ -410,6 +423,7 @@ async function loadLocalState() {
     buyerOrderState = Array.isArray(parsed.buyerOrderState) ? parsed.buyerOrderState : buyerOrderState;
     incomingOrderState = Array.isArray(parsed.incomingOrderState) ? parsed.incomingOrderState : incomingOrderState;
     explorerRows = Array.isArray(parsed.explorerRows) ? parsed.explorerRows : explorerRows;
+    trimExplorerRows();
     Object.assign(sampleOrder, parsed.sampleOrder || {});
     return true;
   } catch {
@@ -580,6 +594,19 @@ function shortText(value, limit = 48) {
   return text.length > limit ? `${text.slice(0, limit - 1)}…` : text;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character];
+  });
+}
+
 function formatStatus(value) {
   if (value === "Released") return "status-success";
   if (value === "Delivered" || value === "Funded") return "status-warning";
@@ -660,28 +687,28 @@ function serviceCardTemplate(service) {
     <article class="service-card">
       <div class="service-top">
         <div>
-          <span class="tag accent">${service.category}</span>
-          <h3>${service.title}</h3>
+          <span class="tag accent">${escapeHtml(service.category)}</span>
+          <h3>${escapeHtml(service.title)}</h3>
         </div>
-        <span class="status ${formatStatus(service.sellerStatus)}">${service.sellerStatus}</span>
+        <span class="status ${formatStatus(service.sellerStatus)}">${escapeHtml(service.sellerStatus)}</span>
       </div>
-      <p>${service.summary}</p>
+      <p>${escapeHtml(service.summary)}</p>
       <div class="meta-row">
-        <span class="meta-chip">${service.deliveryType}</span>
-        <span class="meta-chip">${service.paymentType}</span>
-        <span class="meta-chip">${service.verification}</span>
+        <span class="meta-chip">${escapeHtml(service.deliveryType)}</span>
+        <span class="meta-chip">${escapeHtml(service.paymentType)}</span>
+        <span class="meta-chip">${escapeHtml(service.verification)}</span>
       </div>
       <div class="tag-row">
         <span class="tag blue">${service.price} POT</span>
         <span class="tag">${service.deliveryDays} day delivery</span>
         <span class="tag">${service.completedOrders} orders</span>
-        <span class="tag">${service.rating} rating</span>
+        <span class="tag">${escapeHtml(service.rating)} rating</span>
       </div>
       <div class="tag-row">
-        <span class="tag warn">${service.allowedUse}</span>
+        <span class="tag warn">${escapeHtml(service.allowedUse)}</span>
       </div>
       <div class="tag-row">
-        <button class="button button-secondary" type="button" data-order-service="${service.id}">
+        <button class="button button-secondary" type="button" data-order-service="${escapeHtml(service.id)}">
           Use in order
         </button>
       </div>
@@ -699,17 +726,23 @@ function renderServices() {
 
   agentGrid.innerHTML = featuredAgents.map(serviceCardTemplate).join("");
 
+  const selectedServiceId = orderServiceSelect.value;
   const serviceOptions = services
-    .map((service) => `<option value="${service.id}">${service.title}</option>`)
+    .map((service) => `<option value="${escapeHtml(service.id)}">${escapeHtml(service.title)}</option>`)
     .join("");
   orderServiceSelect.innerHTML = serviceOptions;
+  if (services.some((service) => service.id === selectedServiceId)) {
+    orderServiceSelect.value = selectedServiceId;
+  }
+}
 
-  serviceGrid.querySelectorAll("[data-order-service]").forEach((button) => {
-    button.addEventListener("click", () => {
-      orderServiceSelect.value = button.dataset.orderService;
-      document.querySelector("#delivery").scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
+function handleOrderServiceButtonClick(event) {
+  const button = event.target.closest("[data-order-service]");
+  if (!button) return;
+
+  orderServiceSelect.value = button.dataset.orderService;
+  syncOrderDraftFromService();
+  document.querySelector("#delivery").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderExplorer() {
@@ -725,14 +758,14 @@ function renderExplorer() {
     .map(
       (row) => `
         <tr>
-          <td>${row.time}</td>
-          <td>${row.type}</td>
-          <td>${row.order}</td>
-          <td>${row.from}</td>
-          <td>${row.to}</td>
+          <td>${escapeHtml(row.time)}</td>
+          <td>${escapeHtml(row.type)}</td>
+          <td>${escapeHtml(row.order)}</td>
+          <td>${escapeHtml(row.from)}</td>
+          <td>${escapeHtml(row.to)}</td>
           <td>${row.amount} POT</td>
-          <td><span class="status ${formatStatus(row.status)}">${row.status}</span></td>
-          <td class="hash">${row.tx}</td>
+          <td><span class="status ${formatStatus(row.status)}">${escapeHtml(row.status)}</span></td>
+          <td class="hash">${escapeHtml(row.tx)}</td>
         </tr>
       `,
     )
@@ -763,16 +796,16 @@ function renderIncomingOrders() {
         <article class="list-card">
           <div class="order-top">
             <div>
-              <strong>${order.id}</strong>
-              <p>${order.serviceTitle}</p>
+              <strong>${escapeHtml(order.id)}</strong>
+              <p>${escapeHtml(order.serviceTitle)}</p>
             </div>
-            <span class="status ${formatStatus(order.status)}">${order.status}</span>
+            <span class="status ${formatStatus(order.status)}">${escapeHtml(order.status)}</span>
           </div>
           <div class="meta-row">
-            <span class="meta-chip">${order.buyer}</span>
+            <span class="meta-chip">${escapeHtml(order.buyer)}</span>
             <span class="meta-chip">${order.amount} POT</span>
-            ${order.seller ? `<span class="meta-chip">${order.seller}</span>` : ""}
-            ${order.requirements ? `<span class="meta-chip">${shortText(order.requirements)}</span>` : ""}
+            ${order.seller ? `<span class="meta-chip">${escapeHtml(order.seller)}</span>` : ""}
+            ${order.requirements ? `<span class="meta-chip">${escapeHtml(shortText(order.requirements))}</span>` : ""}
           </div>
         </article>
       `,
@@ -787,17 +820,17 @@ function renderBuyerDashboard() {
         <article class="list-card">
           <div class="order-top">
             <div>
-              <strong>${order.id}</strong>
-              <p>${order.serviceTitle}</p>
+              <strong>${escapeHtml(order.id)}</strong>
+              <p>${escapeHtml(order.serviceTitle)}</p>
             </div>
-            <span class="status ${formatStatus(order.status)}">${order.status}</span>
+            <span class="status ${formatStatus(order.status)}">${escapeHtml(order.status)}</span>
           </div>
           <div class="meta-row">
             <span class="meta-chip">${order.amount} POT</span>
-            <span class="meta-chip">${order.proof}</span>
-            ${order.requirements ? `<span class="meta-chip">${shortText(order.requirements)}</span>` : ""}
-            ${order.dueDate ? `<span class="meta-chip">Due ${order.dueDate}</span>` : ""}
-            <span class="meta-chip">Updated ${order.updated}</span>
+            <span class="meta-chip">${escapeHtml(order.proof)}</span>
+            ${order.requirements ? `<span class="meta-chip">${escapeHtml(shortText(order.requirements))}</span>` : ""}
+            ${order.dueDate ? `<span class="meta-chip">Due ${escapeHtml(order.dueDate)}</span>` : ""}
+            <span class="meta-chip">Updated ${escapeHtml(order.updated)}</span>
           </div>
         </article>
       `,
@@ -811,15 +844,15 @@ function renderBuyerDashboard() {
         <article class="list-card">
           <div class="order-top">
             <div>
-              <strong>${order.serviceTitle}</strong>
-              <p>${order.id}</p>
+              <strong>${escapeHtml(order.serviceTitle)}</strong>
+              <p>${escapeHtml(order.id)}</p>
             </div>
-            <span class="status ${formatStatus(order.status)}">${order.status}</span>
+            <span class="status ${formatStatus(order.status)}">${escapeHtml(order.status)}</span>
           </div>
           <div class="meta-row">
             <span class="meta-chip">${order.amount} POT</span>
-            <span class="meta-chip">${order.seller}</span>
-            ${order.requirements ? `<span class="meta-chip">${shortText(order.requirements)}</span>` : ""}
+            <span class="meta-chip">${escapeHtml(order.seller)}</span>
+            ${order.requirements ? `<span class="meta-chip">${escapeHtml(shortText(order.requirements))}</span>` : ""}
           </div>
         </article>
       `,
@@ -972,6 +1005,13 @@ function pushExplorerRow(type, status) {
     serviceId: sampleOrder.serviceId,
     hash: sampleOrder.proof,
   });
+  trimExplorerRows();
+}
+
+function trimExplorerRows() {
+  if (explorerRows.length > MAX_EXPLORER_ROWS) {
+    explorerRows.length = MAX_EXPLORER_ROWS;
+  }
 }
 
 function pushAdapterResult(type, orderId, result, status = "Submitted") {
@@ -1006,6 +1046,8 @@ function pushAdapterResult(type, orderId, result, status = "Submitted") {
       });
     });
   }
+
+  trimExplorerRows();
 }
 
 async function runChainAction(label, action, onSuccess) {
@@ -1132,7 +1174,7 @@ walletButton.addEventListener("click", async () => {
 
 globalSearch.addEventListener("input", (event) => {
   filters.query = event.target.value;
-  renderServices();
+  renderServicesDeferred();
 });
 
 orderServiceSelect.addEventListener("change", () => {
@@ -1178,8 +1220,11 @@ sellerFilter.addEventListener("change", (event) => {
 
 explorerSearch.addEventListener("input", (event) => {
   filters.explorerQuery = event.target.value;
-  renderExplorer();
+  renderExplorerDeferred();
 });
+
+serviceGrid.addEventListener("click", handleOrderServiceButtonClick);
+agentGrid.addEventListener("click", handleOrderServiceButtonClick);
 
 syncChainButton.addEventListener("click", async () => {
   await hydrateLiveState();
@@ -1318,6 +1363,7 @@ orderForm.addEventListener("submit", async (event) => {
       serviceId,
       hash: proof,
     });
+    trimExplorerRows();
 
     orderForm.reset();
     syncOrderDraftFromService();
